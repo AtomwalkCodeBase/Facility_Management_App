@@ -42,18 +42,26 @@ const _layout = () => {
       <Tabs.Screen
         name="newHome"
         options={{
-          title: 'NewHome',
+          title: 'Home',
           headerShown: false,
           tabBarIcon: ({ color }) => <FontAwesome name="home" size={24} color={color} />,
         }}
       />
 
-      <Tabs.Screen
+      {/* <Tabs.Screen
         name="activity"
         options={{
           title: 'Activity',
           headerShown: false,
           tabBarIcon: ({ color }) => <FontAwesome name="industry" size={24} color={color} />,
+        }}
+      /> */}
+       <Tabs.Screen
+        name="task"
+        options={{
+          title: 'Task',
+          headerShown: false,
+          tabBarIcon: ({ color }) => <Ionicons name="people" size={24} color={color} />,
         }}
       />
       

@@ -5,6 +5,8 @@ import PinPopup from '../../src/screens/PinPopup';
 import { getProfileInfo } from '../../src/services/authServices';
 import ManagerHomePage from '../../src/screens/ManagerHomeScreen';
 import { Text } from 'react-native';
+import NewHomeScreen from '../../src/screens/NewHomeScreen';
+import { StatusBar } from 'expo-status-bar';
 
 const Home = () => {
   const [isManager, setIsManager] = useState(false);
@@ -25,11 +27,13 @@ const Home = () => {
   }, []);
 
   return (
-    <SafeAreaView>
+    <>
       {/* {isManager ? <ManagerHomePage /> : <HomeScreen />} */}
-      <HomeScreen />
+      {/* <HomeScreen /> */}
+      <StatusBar barStyle="light-content" backgroundColor="#6A1B9A" />
+	<NewHomeScreen />
       <PinPopup />
-    </SafeAreaView>
+    </>
   );
 };
 

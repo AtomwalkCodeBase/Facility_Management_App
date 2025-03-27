@@ -24,3 +24,13 @@ export const Colors = {
     tabIconSelected: tintColorDark,
   },
 };
+
+export default {
+  primary: '#3B82F6', // Blue color for primary buttons and active steps
+  secondary: '#F87171', // Red color for back button
+  success: '#10B981', // Green color for submit button
+  inactive: '#D1D5DB', // Gray color for inactive steps
+  background: '#FFFFFF', // White background
+  text: '#111827', // Dark text
+  border: '#E5E7EB', // Light border color
+};

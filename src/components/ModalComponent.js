@@ -1,66 +1,96 @@
-import React from 'react';
-import { Text, View, Modal, TouchableOpacity } from 'react-native';
-import styled from 'styled-components/native';
+import React from "react";
+import { Modal, View, Text, TouchableOpacity, StyleSheet, Dimensions } from "react-native";
 
-const ModalComponent = ({ isVisible, leave, onClose, claim }) => {
-  // console.log("Claim Data",claim)
+const { width, height } = Dimensions.get("window");
+
+export default function ModalComponent({modalVisible, setModalVisible, confirmCompletion, cancelCompletion}) {
   return (
-    <Modal visible={isVisible} transparent={true} animationType="slide">
-      <ModalContainer>
-        <ModalContent>
-
-          
-          {leave ? (
-            <>
-            <Text>{leave.leave_type_display}</Text>
-            <Text>No. of Days: {leave.no_leave_count}</Text>
-            <Text>{leave.from_date} to {leave.to_date}</Text>
-            <Text>Remark: {leave.remarks}</Text>
-            <Text>Status: {leave.status_display}</Text>
-            </>
-          ) : null}
-
-          {claim ? (
-            <>
-            <Text style={{ fontWeight: 'bold' }} >{claim.claim_id}</Text>
-            <Text>Claim Date: {claim.submitted_date}</Text>
-            <Text>Expense Amount: {claim.expense_amt}</Text>
-            <Text>Project Name: {claim.project_name}</Text>
-            <Text>Remark: {claim.remarks}</Text>
-            {/* <Text>Status: {leave.status_display}</Text> */}
-            </>
-          ) : null}
-
-          <CancelButton onPress={onClose}>
-            <Text style={{ color: 'white' }}>Back</Text>
-          </CancelButton>
-        </ModalContent>
-      </ModalContainer>
-    </Modal>
+    <View style={styles.container}>
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalText}>Are you sure you want to complete this task?</Text>
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity 
+                style={[styles.button, styles.confirmButton]} 
+                onPress={confirmCompletion}
+              >
+                <Text style={styles.buttonText}>Confirm</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.button, styles.cancelButton]} 
+                onPress={cancelCompletion}
+              >
+                <Text style={styles.buttonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </View>
   );
-};
+}
 
-// Styled Components for Modal
-const ModalContainer = styled.View`
-  flex: 1;
-  justify-content: center;
-  align-items: center;
-  background-color: rgba(0, 0, 0, 0.5);
-`;
-
-const ModalContent = styled.View`
-  background-color: white;
-  padding: 20px;
-  border-radius: 8px;
-  width: 80%;
-  align-items: center;
-`;
-
-const CancelButton = styled.TouchableOpacity`
-  background-color: #4491FE;
-  padding: 10px;
-  border-radius: 8px;
-  margin-top: 20px;
-`;
-
-export default ModalComponent;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  modalContent: {
+    width: width * 0.8,
+    padding: width * 0.05,
+    backgroundColor: "#f8f8f8",
+    borderRadius: 20,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalText: {
+    textAlign: 'center',
+    fontSize: width * 0.045,
+    marginBottom: height * 0.02,
+    color: "#333",
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  button: {
+    paddingVertical: height * 0.015,
+    paddingHorizontal: width * 0.05,
+    borderRadius: 10,
+    flex: 1,
+    marginHorizontal: width * 0.02,
+  },
+  confirmButton: {
+    backgroundColor: "#6A1B9A",
+  },
+  cancelButton: {
+    backgroundColor: "#D32F2F",
+  },
+  buttonText: {
+    color: "white",
+    textAlign: "center",
+    fontSize: width * 0.04,
+    fontWeight: "600",
+  },
+});
