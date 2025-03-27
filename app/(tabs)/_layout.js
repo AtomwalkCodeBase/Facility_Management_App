@@ -3,6 +3,7 @@ import { Tabs } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { getProfileInfo } from '../../src/services/authServices';
+import { FontAwesome5 } from '@expo/vector-icons';
 
 const _layout = () => {
   const [isUser, setIsUser] = useState(true);
@@ -39,14 +40,14 @@ const _layout = () => {
         }}
       />
 
-      <Tabs.Screen
+      {/* <Tabs.Screen
         name="newHome"
         options={{
           title: 'Home',
           headerShown: false,
           tabBarIcon: ({ color }) => <FontAwesome name="home" size={24} color={color} />,
         }}
-      />
+      /> */}
 
       {/* <Tabs.Screen
         name="activity"
@@ -61,7 +62,7 @@ const _layout = () => {
         options={{
           title: 'Task',
           headerShown: false,
-          tabBarIcon: ({ color }) => <Ionicons name="people" size={24} color={color} />,
+          tabBarIcon: ({ color }) => <FontAwesome5 name="tasks" size={24} color={color} />,
         }}
       />
       
