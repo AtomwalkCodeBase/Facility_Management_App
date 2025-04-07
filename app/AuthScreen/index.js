@@ -97,6 +97,8 @@ const LoginScreen = () => {
           console.error('Error fetching company info:', error.message);
         }
 
+        console.log("Employee Id---",emp_id);
+
         // Navigate to the home screen
         router.push('/home');
       } else {

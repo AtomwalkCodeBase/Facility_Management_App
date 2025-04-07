@@ -29,9 +29,9 @@ const Home = () => {
   return (
     <>
       {/* {isManager ? <ManagerHomePage /> : <HomeScreen />} */}
-      {/* <HomeScreen /> */}
-      <StatusBar barStyle="light-content" backgroundColor="#6A1B9A" />
-	<NewHomeScreen />
+      <HomeScreen />
+      
+	{/* <NewHomeScreen /> */}
       <PinPopup />
     </>
   );

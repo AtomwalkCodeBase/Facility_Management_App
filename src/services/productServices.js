@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { addEmpLeave, getEmpLeavedata, addClaim, getEmpClaimdata, getExpenseItemList, getProjectList, getEmpAttendanceData, getEmpHolidayData, empCheckData, processClaim, getClaimApproverList, getActivities, getActivityQc, processActivity, getInventoryItemList, processItemInv, userTaskListURL, empLoginURL } from "../services/ConstantServies";
+import { addEmpLeave, getEmpLeavedata, addClaim, getEmpClaimdata, getExpenseItemList, getProjectList, getEmpAttendanceData, getEmpHolidayData, empCheckData, processClaim, getClaimApproverList, getActivities, getActivityQc, processActivity, getInventoryItemList, processItemInv, userTaskListURL, empLoginURL, updateTaskURL } from "../services/ConstantServies";
 import { authAxios, authAxiosFilePost, authAxiosPost } from "./HttpMethod";
 
 export async function getUserTasks(task_type, customer_id, lead_id) {
@@ -182,3 +182,16 @@ export function getEmpLeave(leave_type , emp_id, year) {
     return authAxiosPost(empLoginURL, data)
   
   }
+
+
+  export function updateTask(task_data, is_completed='N', assign_user='N') {
+    // console.log('updateTask', task_data, is_completed, assign_user)
+    let data = {};
+    data['task_data'] = task_data
+    data['is_completed'] = is_completed; 
+    data['assign_user'] = assign_user; 
+
+    console.log("On call data===",data)
+    
+    return authAxiosPost(updateTaskURL, data);
+}

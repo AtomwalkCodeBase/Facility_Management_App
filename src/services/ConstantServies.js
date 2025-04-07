@@ -44,6 +44,7 @@ export const getLeadListURL = `${endpoint}/lead_list/${db_name}/`;
 export const getLeadDataListURL = `${endpoint}/lead_data_list/${db_name}/`;
 export const addTaskURL = `${endpoint}/add_task/${db_name}/`;
 export const profileInfoURL = `${endpoint}/profile_info/${db_name}/`;
+export const profileDtlURL = `${endpoint}/get_employee_list/${db_name}/`;
 export const companyInfoURL = `${endpoint}/company_info/${db_name}/`;
 export const getTaskInterestListURL = `${endpoint}/task_interest_list/${db_name}/`;
 export const getProductCategoryListURL = `${endpoint}/product_category_list/${db_name}/`;

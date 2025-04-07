@@ -6,27 +6,27 @@ import { AppContext } from '../../context/AppContext';
 import { getCompanyInfo, getProfileInfo } from '../services/authServices';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
-import { getActivityList, getUserTasks } from '../services/productServices';
+import { getActivityList, getUserTasks, updateTask } from '../services/productServices';
 import Loader from '../components/old_components/Loader';
 import BottomSheetModal from '../components/BottomSheetModal';
 import { Feather } from '@expo/vector-icons';
-import SwipeableTaskCard from '../components/SwipeableTaskCard';
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import ModalComponent from '../components/ModalComponent';
 
 const { width } = Dimensions.get('window');
 
-
 const Container = styled.View`
+  flex: 1;
   background-color: #f5f5f5;
 `;
 
-const GradientBackground = styled(LinearGradient).attrs((props) => ({
+const GradientBackground = styled(LinearGradient).attrs({
   colors: ['#6a11cb', '#2575fc'],
   start: { x: 0, y: 0 },
   end: { x: 1, y: 1 },
-}))`
+})`
+  flex: 1;
   align-items: center;
-  height: 100%;
 `;
 
 const CompanyContainer = styled.View`
@@ -42,7 +42,7 @@ const CompanyContainer = styled.View`
 `;
 
 const CompanyTextContainer = styled.View`
-  display: flex;
+  flex: 1;
   align-items: flex-start;
 `;
 
@@ -63,7 +63,7 @@ const LogoContainer = styled.View`
   width: ${width * 0.2}px;
   height: ${width * 0.2}px;
   background-color: #ffffff;
-  border-radius: ${width * 0.25}px;
+  border-radius: ${width * 0.1}px;
   align-items: center;
   justify-content: center;
   margin-bottom: 15px;
@@ -71,16 +71,15 @@ const LogoContainer = styled.View`
   elevation: 5;
 `;
 
-const Logo = styled.Image.attrs(() => ({
+const Logo = styled.Image.attrs({
   resizeMode: 'contain',
-}))`
+})`
   width: 95%;
   height: 95%;
-  border-radius: ${width * 0.35}px;
+  border-radius: ${width * 0.1}px;
 `;
 
 const ProfileTextContainer = styled.View`
-  display: flex;
   align-items: center;
   padding-top: 20px;
 `;
@@ -93,6 +92,7 @@ const TaskHeader = styled.Text`
 `;
 
 const TaskListContainer = styled.View`
+  flex: 1;
   width: 100%;
   height: 100%;
   padding: 10px;
@@ -133,10 +133,14 @@ const HomePage = ({ navigation }) => {
   const [profile, setProfile] = useState([]);
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [filterData, setFilterData] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isDateModalVisible, setDateModalVisible] = useState(false);
   const [isStatusModalVisible, setStatusModalVisible] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
   const fadeAnim = useState(new Animated.Value(0))[0];
 
   useEffect(() => {
@@ -154,11 +158,6 @@ const HomePage = ({ navigation }) => {
     }
   }, [route?.params?.refresh]);
 
-  useEffect(() => {
-    console.log("Date Modal Visible:", isDateModalVisible);
-  }, [isDateModalVisible]);
-  
-
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -173,7 +172,7 @@ const HomePage = ({ navigation }) => {
       fetchTasks(selectedIndex);
     } catch (error) {
       console.error('Error fetching data:', error);
-      Alert.alert('Error', 'Failed to fetch data. Please try again later.');
+      Alert.alert('Error', 'Failed to load app data. Please check your connection and try again.');
     }
     setLoading(false);
   };
@@ -191,14 +190,13 @@ const HomePage = ({ navigation }) => {
     setLoading(true);
     try {
       const res = await getUserTasks(taskType, '', '');
-      // Map the API response to match the expected task structure
       const mappedTasks = res.data.map(task => ({
         id: task.id.toString(),
         title: task.name || "Untitled Task",
         description: task.remarks || "",
         taskDate: task.task_date || "N/A",
         endDate: task.task_date || "N/A",
-        time: `${task.start_time} - ${task.end_time }`|| "",
+        time: `${task.start_time} - ${task.end_time}` || "",
         startTime: task.start_time || "",
         endTime: task.end_time || "",
         status: task.task_status || "Pending",
@@ -207,12 +205,12 @@ const HomePage = ({ navigation }) => {
         customer: task.customer?.name || "No Customer",
         assignedTo: task.curr_user?.user_nick_name || task.curr_user?.user_name || "Unassigned",
         owner: task.owner?.user_nick_name || task.owner?.user_name || "No Owner",
-        originalData: task // Keep original data for reference
+        originalData: task
       }));
-      setFilterData(mappedTasks);
+      setFilterData(mappedTasks.filter(task => task.status !== "Completed"));
     } catch (error) {
       console.error('Error fetching tasks:', error);
-      Alert.alert('Error', 'Failed to fetch tasks. Please try again later.');
+      Alert.alert('Error', 'Failed to load tasks. Please try again later.');
     }
     setLoading(false);
   };
@@ -229,6 +227,44 @@ const HomePage = ({ navigation }) => {
     setDateModalVisible(false);
   };
 
+  const handleTaskComplete = async (task) => {
+    setSelectedTask(task);
+    setModalVisible(true);
+  };
+
+  const confirmCompletion = async () => {
+    setModalVisible(false);
+    setIsUpdating(true);
+    
+    try {
+      if (!selectedTask?.originalData?.id) {
+        throw new Error('Missing task ID');
+      }
+
+      const taskData = {
+        curr_user: selectedTask?.originalData?.curr_user?.id || "",
+        id: selectedTask.originalData.id,
+        name: selectedTask.originalData.name || selectedTask.title || "Unnamed Task",
+        remarks: selectedTask.originalData.remarks || selectedTask.description || "",
+        start_time: selectedTask.originalData.start_time || null,
+        task_date: selectedTask.originalData.task_date || selectedTask.taskDate || new Date().toLocaleDateString('en-GB'),
+        task_type: selectedTask.originalData.task_type || selectedTask.taskType || "GENERAL"
+      };
+
+      await updateTask(taskData, 'Y', 'N');
+      fetchTasks(selectedIndex); // Refresh the task list
+    } catch (error) {
+      console.error('Error completing task:', error);
+      Alert.alert('Error', error.message || 'Failed to complete task');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const cancelCompletion = () => {
+    setModalVisible(false);
+  };
+
   const handleSelectStatus = (status) => {
     if (status === 'ALL') {
       fetchTasks(selectedIndex);
@@ -239,108 +275,142 @@ const HomePage = ({ navigation }) => {
     setStatusModalVisible(false);
   };
 
-  const handleMarkAsCompleted = async (taskId) => {
-    try {
-      // Here you would typically call an API to mark the task as completed
-      // For now, we'll update the status in the local state
-      setFilterData(prevTasks => 
-        prevTasks.map(task => 
-          task.id === taskId 
-            ? { ...task, status: "Completed" } 
-            : task
-        )
-      );
-      Alert.alert('Success', 'Task marked as completed');
-    } catch (error) {
-      console.error('Error marking task as complete:', error);
-      Alert.alert('Error', 'Failed to mark task as complete');
-    }
+  const refreshTasks = () => {
+    setRefreshKey(prev => prev + 1);
+    fetchTasks(selectedIndex);
   };
 
+  const renderTaskItem = ({ item }) => (
+    <TouchableOpacity 
+      onPress={() => handleTaskComplete(item)}
+      style={styles.taskItem}
+    >
+      <Text style={styles.taskTitle}>{item.title}</Text>
+      <Text style={styles.taskDescription}>{item.description}</Text>
+      <Text style={styles.taskDate}>{item.taskDate} • {item.time}</Text>
+      <Text style={[
+        styles.taskStatus,
+        item.status === 'Completed' ? styles.completedStatus : 
+        item.status === 'Pending' ? styles.pendingStatus : styles.plannedStatus
+      ]}>
+        {item.status}
+      </Text>
+    </TouchableOpacity>
+  );
+
   return (
-    <Container>
-      <StatusBar barStyle="light-content" backgroundColor="#6a11cb" />
-      <GradientBackground>
-        <Loader visible={loading} />
-        <CompanyContainer>
-          <LogoContainer>
-            <Logo source={{ uri: company.image || 'https://home.atomwalk.com/static/media/Atom_walk_logo-removebg-preview.21661b59140f92dd7ced.png' }} />
-          </LogoContainer>
-          <CompanyTextContainer>
-            <CompanyName>{company.name || 'Atomwalk Technologies'}</CompanyName>
-            <SubHeader>Welcome to Atomwalk Office!</SubHeader>
-          </CompanyTextContainer>
-        </CompanyContainer>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <Container>
+        <StatusBar barStyle="light-content" backgroundColor="#6a11cb" />
+        <GradientBackground>
+          <Loader visible={loading} />
+          <CompanyContainer>
+            <LogoContainer>
+              <Logo source={{ uri: company.image || 'https://home.atomwalk.com/static/media/Atom_walk_logo-removebg-preview.21661b59140f92dd7ced.png' }} />
+            </LogoContainer>
+            <CompanyTextContainer>
+              <CompanyName>{company.name || 'Atomwalk Technologies'}</CompanyName>
+              <SubHeader>Welcome to Atomwalk Office!</SubHeader>
+            </CompanyTextContainer>
+          </CompanyContainer>
 
-        <ProfileTextContainer>
-          <TaskHeader>My Tasks</TaskHeader>
-        </ProfileTextContainer>
+          <ProfileTextContainer>
+            <TaskHeader>My Tasks</TaskHeader>
+          </ProfileTextContainer>
 
-        <ButtonContainer>
-        <FilterButton onPress={() => {
-          console.log("Opening Date Filter Modal");
-          setDateModalVisible(true);
-        }}>
-          <Feather name="calendar" size={20} color="#454545" />
-          <FilterButtonText>Filter by Day</FilterButtonText>
-        </FilterButton>
-        
-          <FilterButton onPress={() => setStatusModalVisible(true)}>
-            <Feather name="filter" size={20} color="#454545" />
-            <FilterButtonText>Filter by Status</FilterButtonText>
-          </FilterButton>
-        </ButtonContainer>
+          <ButtonContainer>
+            <FilterButton onPress={() => setDateModalVisible(true)}>
+              <Feather name="calendar" size={20} color="#454545" />
+              <FilterButtonText>Filter by Day</FilterButtonText>
+            </FilterButton>
+            
+            <FilterButton onPress={() => setStatusModalVisible(true)}>
+              <Feather name="filter" size={20} color="#454545" />
+              <FilterButtonText>Filter by Status</FilterButtonText>
+            </FilterButton>
+          </ButtonContainer>
 
-        
+          <TaskListContainer>
+            <FlatList
+              data={filterData}
+              renderItem={renderTaskItem}
+              keyExtractor={item => item.id}
+              contentContainerStyle={styles.listContent}
+              ListEmptyComponent={
+                <Text style={styles.emptyText}>No tasks found</Text>
+              }
+            />
+          </TaskListContainer>
+        </GradientBackground>
 
-        <TaskListContainer>
-          <GestureHandlerRootView style={styles.listContainer}>
-            <Animated.View style={{ opacity: fadeAnim }}>
-              <FlatList
-                data={filterData}
-                renderItem={({ item }) => (
-                  <SwipeableTaskCard
-                    task={item}
-                    onMarkComplete={handleMarkAsCompleted}
-                  />
-                )}
-                keyExtractor={(item) => item.id}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.listContent}
-              />
-            </Animated.View>
-          </GestureHandlerRootView>
-        </TaskListContainer>
-      </GradientBackground>
-
-      {isDateModalVisible && (
         <BottomSheetModal
-          key={isDateModalVisible}
           visible={isDateModalVisible}
           options={['TODAY', 'NEXT 3', 'PAST', 'ALL']}
           onSelect={handleSelectTaskType}
           onClose={() => setDateModalVisible(false)}
         />
-      )}
-      
+        
+        <BottomSheetModal
+          visible={isStatusModalVisible}
+          options={['Planned', 'Completed', 'Not Planned', 'ALL']}
+          onSelect={handleSelectStatus}
+          onClose={() => setStatusModalVisible(false)}
+        />
 
-      <BottomSheetModal
-        visible={isStatusModalVisible}
-        options={['Planned', 'Completed', 'Not Planned', 'ALL']}
-        onSelect={handleSelectStatus}
-        onClose={() => setStatusModalVisible(false)}
-      />
-    </Container>
+        <ModalComponent 
+          modalVisible={modalVisible} 
+          setModalVisible={setModalVisible} 
+          confirmCompletion={confirmCompletion} 
+          cancelCompletion={cancelCompletion}
+          isUpdating={isUpdating}
+        />
+      </Container>
+    </GestureHandlerRootView>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#f8f8f8',
+  taskItem: {
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+    elevation: 2,
   },
-  listContainer: {
-    flex: 1,
+  taskTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  taskDescription: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 5,
+  },
+  taskDate: {
+    fontSize: 12,
+    color: '#888',
+    marginBottom: 5,
+  },
+  taskStatus: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    alignSelf: 'flex-end',
+  },
+  completedStatus: {
+    color: 'green',
+  },
+  pendingStatus: {
+    color: 'orange',
+  },
+  plannedStatus: {
+    color: 'blue',
+  },
+  emptyText: {
+    textAlign: 'center',
+    marginTop: 20,
+    fontSize: 16,
+    color: '#666',
   },
   listContent: {
     paddingBottom: 20,

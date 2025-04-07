@@ -30,6 +30,7 @@ const ProfileScreen = () => {
         const res = await getProfileInfo();
         setProfile(res?.data);
         setUserGroup(res.data?.user_group);
+        console.log("profhb",res.data);
       } catch (error) {
         console.error('Failed to fetch profile:', error);
       } finally {
@@ -51,7 +52,7 @@ const ProfileScreen = () => {
   const handleQRPress = () => setIsModalVisible(true);
   const handleCloseModal = () => setIsModalVisible(false);
 
-  console.log('Prf====',profile.user_name)
+  // console.log('Prf====',profile)
 
 
   return (
