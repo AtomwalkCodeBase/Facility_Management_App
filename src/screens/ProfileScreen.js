@@ -1,21 +1,20 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, Dimensions, ScrollView } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import { AppContext } from '../../context/AppContext';
 import { getProfileInfo } from '../services/authServices';
 import { useNavigation, useRouter } from 'expo-router';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import QRModal from '../components/QRModal';
 import HeaderComponent from '../components/HeaderComponent';
 import Loader from '../components/old_components/Loader';
+import moment from 'moment';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 const ProfileScreen = () => {
   const { logout } = useContext(AppContext);
   const [profile, setProfile] = useState({});
-  const [userGroup, setUserGroup] = useState({});
   const [userPin, setUserPin] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -28,9 +27,7 @@ const ProfileScreen = () => {
       setIsLoading(true);
       try {
         const res = await getProfileInfo();
-        setProfile(res?.data);
-        setUserGroup(res.data?.user_group);
-        console.log("profhb",res.data);
+        setProfile(res?.data[0]);
       } catch (error) {
         console.error('Failed to fetch profile:', error);
       } finally {
@@ -52,214 +49,263 @@ const ProfileScreen = () => {
   const handleQRPress = () => setIsModalVisible(true);
   const handleCloseModal = () => setIsModalVisible(false);
 
-  // console.log('Prf====',profile)
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Not available';
+    return moment(dateString, 'DD-MMM-YYYY').format('MMMM Do, YYYY');
+  };
 
+  // Handle image loading errors
+  const handleImageError = () => {
+    return require('../../assets/images/default-profile.jpg'); // Make sure you have this asset
+  };
 
   return (
     <>
-      <HeaderComponent headerTitle="My Profile" onBackPress={handleBackPress} />
+      <HeaderComponent headerTitle="Employee Profile" onBackPress={handleBackPress} />
       {isLoading ? (
-          <Loader visible={isLoading} />
-        ) : (
-      <ScrollView contentContainerStyle={styles.container}>
-        {/* QR Button */}
-        <TouchableOpacity style={styles.qrButton} onPress={handleQRPress}>
-          <MaterialCommunityIcons name="qrcode" size={28} color="#00796b" />
-        </TouchableOpacity>
+        <Loader visible={isLoading} />
+      ) : (
+        <ScrollView contentContainerStyle={styles.container}>
+          {/* Profile Header */}
+          <View style={styles.profileHeader}>
+            <View style={styles.avatarContainer}>
+              <Image
+                source={profile?.image ? { uri: profile.image } : require('../../assets/images/default-profile.jpg')}
+                style={styles.profileImage}
+                onError={handleImageError}
+                defaultSource={require('../../assets/images/default-profile.jpg')}
+              />
+            </View>
+            <View style={styles.profileTitle}>
+              <Text style={styles.userName}>{profile?.name || 'Employee Name'}</Text>
+              <Text style={styles.userPosition}>{profile?.grade_name || 'Position'}</Text>
+            </View>
+          </View>
 
-        {/* Profile Section */}
-        <View style={styles.profileSection}>
-          <Animated.View
-            style={styles.avatarContainer}
-            entering={FadeIn.duration(700)}
-            exiting={FadeOut.duration(500)}
-          >
-            <Image source={{ uri: profile?.image }} style={styles.profileImage} />
-          </Animated.View>
-
-          
-          {profile?.emp_data?.name && (
-            <Text style={styles.userName}>{profile?.emp_data?.name}</Text>
-          )}
-          {profile?.user_name && (
-            <Text style={styles.userId}>{profile.user_name}</Text>
-          )}
-          
-          <Text style={styles.userRole}>{userGroup?.name || 'Employee'}</Text>
-        </View>
-
-        {/* Details Section */}
-        {profile?.emp_data?.emp_id && (
-        <View style={styles.detailsContainer}>
-            <InfoRow icon="badge-account-horizontal" text={`Employee ID: ${profile?.emp_data?.emp_id}`} />
-        </View>
-        )}
-
-        {profile?.emp_data?.department_name && (
-        <View style={styles.detailsContainer}>
-            <InfoRow icon="office-building" text={`Department: ${profile?.emp_data?.department_name}`} />
-        </View>
-        )}
-
-        {profile?.mobile_number && (
-        <View style={styles.detailsContainer}>
-            <InfoRow icon="phone" text={`Mobile: ${profile?.mobile_number}`} />
-          
-        </View>
-        )}
-
-        {/* Actions */}
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.pinButton} onPress={handlePressPassword}>
-            <Text style={styles.pinText}>{userPin ? 'Update Your Pin' : 'Set Your Pin'}</Text>
+          {/* QR Button */}
+          <TouchableOpacity style={styles.qrButton} onPress={handleQRPress}>
+            <MaterialIcons name="qr-code" size={24} color="#2c3e50" />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.logoutButton} 
-          onPress={async () => {
-                                await AsyncStorage.removeItem('userPin');
-                                await AsyncStorage.removeItem('authToken');  // Add other keys if needed
-                                logout();
-                              }}>
-            <MaterialCommunityIcons name="logout" size={24} color="#d9534f" />
-            <Text style={styles.logoutText}>Log Out</Text>
-          </TouchableOpacity>
-        </View>
+          {/* Employee Details Section */}
+          <View style={styles.section}>
+            <Text style={styles.sectionHeader}>EMPLOYEE DETAILS</Text>
+            
+            <InfoRow 
+              icon="badge" 
+              label="Employee ID" 
+              value={profile?.emp_id || 'EMP-007'} 
+            />
+            <InfoRow 
+              icon="business" 
+              label="Department" 
+              value={profile?.department_name || 'BLR OFFICE'} 
+            />
+            <InfoRow 
+              icon="date-range" 
+              label="Date of Joining" 
+              value={formatDate(profile?.date_of_join)} 
+            />
 
-        {/* QR Modal */}
-        <QRModal
-          isVisible={isModalVisible}
-          onClose={handleCloseModal}
-          qrValue={profile?.emp_data?.emp_id || 'No Image Available'}
-        />
-      </ScrollView>
-)}
+          </View>
+
+          {/* Contact Information Section */}
+          <View style={styles.section}>
+            <Text style={styles.sectionHeader}>CONTACT INFORMATION</Text>
+            
+            <InfoRow 
+              icon="mail" 
+              label="Email" 
+              value={profile?.email_id || 'souvagyaranjandash8@gmail.com'} 
+            />
+            <InfoRow 
+              icon="phone" 
+              label="Mobile" 
+              value={profile?.mobile_number || '7381625406'} 
+            />
+          </View>
+
+          {/* Leave Information */}
+          <View style={styles.section}>
+            <Text style={styles.sectionHeader}>LEAVE INFORMATION</Text>
+            <InfoRow 
+              icon="event-available" 
+              label="Available Leaves" 
+              value={profile?.max_no_leave || 17} 
+            />
+          </View>
+
+          {/* Action Buttons */}
+          <View style={styles.actionContainer}>
+            <TouchableOpacity 
+              style={[styles.actionButton, styles.primaryButton]}
+              onPress={handlePressPassword}
+            >
+              <MaterialIcons name="lock" size={20} color="#fff" />
+              <Text style={styles.buttonText}>{userPin ? 'UPDATE SECURITY PIN' : 'SET SECURITY PIN'}</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[styles.actionButton, styles.secondaryButton]}
+              onPress={async () => {
+                await AsyncStorage.removeItem('userPin');
+                await AsyncStorage.removeItem('authToken');
+                logout();
+              }}
+            >
+              <MaterialIcons name="logout" size={20} color="#e74c3c" />
+              <Text style={[styles.buttonText, styles.logoutText]}>LOGOUT</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* QR Modal */}
+          <QRModal
+            isVisible={isModalVisible}
+            onClose={handleCloseModal}
+            qrValue={profile?.emp_id || 'EMP-007'}
+          />
+        </ScrollView>
+      )}
     </>
   );
 };
 
-// Reusable Row Component for Info
-const InfoRow = ({ icon, text }) => (
+const InfoRow = ({ icon, label, value }) => (
   <View style={styles.infoRow}>
-    <MaterialCommunityIcons name={icon} size={22} color="#555" />
-    <Text style={styles.infoText}>{text}</Text>
+    <MaterialIcons name={icon} size={20} color="#7f8c8d" style={styles.infoIcon} />
+    <View style={styles.infoContent}>
+      <Text style={styles.infoLabel}>{label}</Text>
+      <Text style={styles.infoValue}>{value}</Text>
+    </View>
   </View>
 );
 
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: '#ffffff',
-    padding: width * 0.05,
-    alignItems: 'center',
+    backgroundColor: '#ecf0f1',
+    paddingBottom: 30,
   },
-  infocontainer: {
-    flexGrow: 1,
-    backgroundColor: '#ffffff',
-    padding: width * 0.05,
+  profileHeader: {
+    backgroundColor: '#fff',
+    padding: 25,
     alignItems: 'center',
-  },
-  qrButton: {
-    position: 'absolute',
-    top: 15,
-    right: 20,
-    backgroundColor: '#e3f2fd',
-    padding: 10,
-    borderRadius: 25,
-    elevation: 3,
-    zIndex: 10,
-  },
-  profileSection: {
-    alignItems: 'center',
-    marginTop: height * 0.05,
-    marginBottom: height * 0.02,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
   },
   avatarContainer: {
-    backgroundColor: '#e8f0fe',
-    width: width * 0.3,
-    height: width * 0.3,
-    borderRadius: width * 0.15,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#f5f5f5',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 15,
-    elevation: 6,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
   },
   profileImage: {
-    width: '92%',
-    height: '92%',
-    borderRadius: (width * 0.3) / 2,
+    width: '100%',
+    height: '100%',
+  },
+  profileTitle: {
+    alignItems: 'center',
   },
   userName: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '600',
-    color: '#222',
+    color: '#2c3e50',
     marginBottom: 5,
   },
-  userRole: {
+  userPosition: {
     fontSize: 16,
-    color: '#555',
+    color: '#7f8c8d',
     fontWeight: '500',
-    marginBottom: 15,
   },
-  userId: {
-    fontSize: 16,
-    color: '#555',
-    fontWeight: '500',
-    marginBottom: 5,
-  },
-  detailsContainer: {
-    width: '100%',
-    backgroundColor: '#f5f7fa',
-    padding: 15,
-    borderRadius: 15,
-    marginBottom: 20,
+  qrButton: {
+    position: 'absolute',
+    top: 30,
+    right: 20,
+    backgroundColor: '#fff',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
     elevation: 3,
+  },
+  section: {
+    backgroundColor: '#fff',
+    borderRadius: 0,
+    marginVertical: 8,
+    marginHorizontal: 0,
+    padding: 20,
+    borderBottomWidth: 1,
+    borderTopWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  sectionHeader: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#95a5a6',
+    marginBottom: 15,
+    letterSpacing: 1,
   },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 20,
   },
-  infoText: {
-    fontSize: 16,
-    color: '#444',
-    marginLeft: 10,
+  infoIcon: {
+    marginRight: 15,
+    width: 24,
+    textAlign: 'center',
   },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    gap: 10,
-  },
-  pinButton: {
-    backgroundColor: '#007bff',
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 25,
+  infoContent: {
     flex: 1,
+  },
+  infoLabel: {
+    fontSize: 13,
+    color: '#95a5a6',
+    marginBottom: 3,
+  },
+  infoValue: {
+    fontSize: 16,
+    color: '#34495e',
+    fontWeight: '500',
+  },
+  actionContainer: {
+    padding: 20,
+  },
+  actionButton: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 4,
+    padding: 15,
+    borderRadius: 4,
+    marginBottom: 15,
   },
-  pinText: {
-    color: '#ffffff',
-    fontSize: 16,
+  primaryButton: {
+    backgroundColor: '#3498db',
+  },
+  secondaryButton: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#e74c3c',
+  },
+  buttonText: {
+    color: '#fff',
     fontWeight: '600',
-  },
-  logoutButton: {
-    backgroundColor: '#ffe5e5',
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 25,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    elevation: 4,
+    marginLeft: 10,
+    fontSize: 15,
   },
   logoutText: {
-    color: '#d9534f',
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
+    color: '#e74c3c',
   },
 });
 
