@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   completeButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#3c9df1',
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 4,
