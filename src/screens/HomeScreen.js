@@ -200,9 +200,9 @@ const HomePage = ({ navigation }) => {
             />
           </View>
           <View>
-            <Text style={styles.userGreeting}>Hello</Text>
+            {/* <Text style={styles.userGreeting}>Hello</Text> */}
             <Text style={styles.userMessage}>
-              welcome to {company.name || "Atomwalk Technologies"}
+             {company.name || "Atomwalk Technologies"}
             </Text>
           </View>
         </View>
@@ -286,6 +286,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginRight: width * 0.04,
+    marginTop: height * 0.02,
   },
   profileImage: {
     width: "100%",
