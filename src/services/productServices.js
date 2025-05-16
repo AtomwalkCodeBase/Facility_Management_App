@@ -3,6 +3,7 @@ import { addEmpLeave, getEmpLeavedata, addClaim, getEmpClaimdata, getExpenseItem
 import { authAxios, authAxiosFilePost, authAxiosPost } from "./HttpMethod";
 
 export async function getUserTasks(task_type, customer_id, lead_id) {
+  const url = await userTaskListURL();
   let data = {};
   
   // Fetch emp_id asynchronously
@@ -22,7 +23,7 @@ export async function getUserTasks(task_type, customer_id, lead_id) {
   }
 
   console.log('getUserTasks', data)
-  return authAxios(userTaskListURL, data);
+  return authAxios(url, data);
 }
 
 export function getEmpLeave(leave_type , emp_id, year) {
@@ -121,17 +122,19 @@ export function getEmpLeave(leave_type , emp_id, year) {
   }
 
 
-  export function getActivityList() { 
+  export async function getActivityList() { 
+    const url = await getActivities();
     
-    return authAxios(getActivities)
+    return authAxios(url)
   }
 
-  export function getManagerActivityList(res) { 
+  export async function getManagerActivityList(res) {
+    const url = await getActivities(); 
     let data = {
       'call_mode': res.call_mode 
     };
     console.log('callt type==',res.call_mode)
-    return authAxios(getActivities,data)
+    return authAxios(url,data)
   }
 
   
@@ -173,25 +176,42 @@ export function getEmpLeave(leave_type , emp_id, year) {
   
   }
 
-  export function empLoginPrc(res) {
+  export async function empLoginPrc(res) {
+    const url = await empLoginURL();
     let data = {};
     if (res) {
       data['login_data'] = res;
     }
     console.log('Data to be sent:', data);
-    return authAxiosPost(empLoginURL, data)
+    return authAxiosPost(url, data)
   
   }
 
 
-  export function updateTask(task_data, is_completed='N', assign_user='N') {
+  export async function updateTask(task_data, is_completed='N', assign_user='N') {
     // console.log('updateTask', task_data, is_completed, assign_user)
     let data = {};
     data['task_data'] = task_data
     data['is_completed'] = is_completed; 
     data['assign_user'] = assign_user; 
-
     console.log("On call data===",data)
+    const url = await updateTaskURL();
     
-    return authAxiosPost(updateTaskURL, data);
+    return authAxiosPost(url, data);
 }
+
+export async function setUserPinView(o_pin, n_pin, employeeId) {
+    
+    const effectiveEmpoyeeId = employeeId;
+
+    let data = {
+      u_id: effectiveEmpoyeeId,
+      o_pin: o_pin,
+      n_pin: n_pin,
+      user_type: "EMP",
+    };
+
+    console.log("Data to be sent--->",data)
+    const url = await setUserPinURL();
+    return authAxiosPost(url, data);
+  }

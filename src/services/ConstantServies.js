@@ -1,11 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const getDbName = async () => {
-  let dbName = await AsyncStorage.getItem('dbName');
-  return dbName;
-}
+const getDbName = async (path) => {
+  let dbData = await AsyncStorage.getItem('dbName');
+  return dbData
+};
 // const localhost = "https://www.atomwalk.com"
-const localhost = "https://www.atomwalk.com"
+const localhost = "https://crm.atomwalk.com"
 
 const apiURL = "/api";
 const db_name = getDbName();
@@ -31,12 +31,12 @@ export const addressDeleteURL = id => `${endpoint}/address/delete/${db_name}/${i
 export const userSignUpURL = `${endpoint}/customer_sign_up/${db_name}/`;
 export const userLoginURL = `${endpoint}/customer_login/${db_name}/`;
 export const loginURL = `${localhost}/rest-auth/login/`;
-export const empLoginURL = `${endpoint}/emp_user_login/${db_name}/`;
+// export const empLoginURL = `${endpoint}/emp_user_login/${db_name}/`;
 export const resetPasswordURL = `${endpoint}/reset_password/${db_name}/`;
 export const resetPasswordConfirmURL = `${endpoint}/reset_password_confirm/`;
 export const changePasswordURL = `${endpoint}/change_password/`;
 export const checkoutURL = `${endpoint}/order_checkout/${db_name}/`;
-export const userTaskListURL = `${endpoint}/user_task/${db_name}/`;
+// export const userTaskListURL = `${endpoint}/user_task/${db_name}/`;
 export const addLeadURL = `${endpoint}/add_lead/${db_name}/`;
 export const getCustomerListURL = `${endpoint}/customer_list/${db_name}/`;
 export const getCustomerDetailListURL = `${endpoint}/customer_detail_list/${db_name}/`;
@@ -44,8 +44,8 @@ export const getLeadListURL = `${endpoint}/lead_list/${db_name}/`;
 export const getLeadDataListURL = `${endpoint}/lead_data_list/${db_name}/`;
 export const addTaskURL = `${endpoint}/add_task/${db_name}/`;
 export const profileInfoURL = `${endpoint}/profile_info/${db_name}/`;
-export const profileDtlURL = `${endpoint}/get_employee_list/${db_name}/`;
-export const companyInfoURL = `${endpoint}/company_info/${db_name}/`;
+// export const profileDtlURL = `${endpoint}/get_employee_list/${db_name}/`;
+// export const companyInfoURL = `${endpoint}/company_info/${db_name}/`;
 export const getTaskInterestListURL = `${endpoint}/task_interest_list/${db_name}/`;
 export const getProductCategoryListURL = `${endpoint}/product_category_list/${db_name}/`;
 export const getVariationNameListURL = `${endpoint}/variation_name_list/${db_name}/`;
@@ -53,7 +53,7 @@ export const getLeadStatusListURL = `${endpoint}/lead_status_list/${db_name}/`;
 export const getTaskTypeListURL = `${endpoint}/task_type_list/${db_name}/`;
 export const updateTaskInterestURL = `${endpoint}/update_task_interest/${db_name}/`;
 export const getOrderListURL = `${endpoint}/order_list/${db_name}/`;
-export const updateTaskURL = `${endpoint}/update_task/${db_name}/`;
+// export const updateTaskURL = `${endpoint}/update_task/${db_name}/`;
 export const updateLeadStatusURL = `${endpoint}/update_lead_status/${db_name}/`;
 export const getUserListURL = `${endpoint}/user_list/${db_name}/`;
 export const getEmpLeavedata = `${endpoint}/get_employee_leave/${db_name}/`;
@@ -67,9 +67,42 @@ export const getEmpAttendanceData = `${endpoint}/get_employee_attendance/${db_na
 export const getEmpHolidayData = `${endpoint}/get_holiday_data/${db_name}/`;
 export const empCheckData = `${endpoint}/process_employee_attendance/${db_name}/`;
 export const getClaimApproverList = `${endpoint}/get_claim_approve_list/${db_name}/`;
-export const getActivities = `${endpoint}/get_user_activity/${db_name}/`;
+// export const getActivities = `${endpoint}/get_user_activity/${db_name}/`;
 export const getActivityQc = `${endpoint}/get_activity_data/${db_name}/`;
 export const processActivity = `${endpoint}/process_activity_data/${db_name}/`;
 export const getInventoryItemList = `${endpoint}/inventory_item_list/${db_name}/`;
 export const processItemInv= `${endpoint}/process_item_srl_num_data/${db_name}/`;
 
+
+
+export const companyInfoURL = async () => {
+  const db_name = await getDbName();
+  return `${endpoint}/company_info/${db_name}/`;
+};
+
+export const profileDtlURL = async () => {
+  const db_name = await getDbName();
+  return `${endpoint}/get_employee_list/${db_name}/`;
+}
+
+export const getActivities = async () => {
+  const db_name = await getDbName();
+  return `${endpoint}/get_user_activity/${db_name}/`;
+}
+
+export const updateTaskURL = async () => {
+    const db_name = await getDbName();
+    return `${endpoint}/update_task/${db_name}/`;
+}
+
+export const userTaskListURL =  async () => {
+    const db_name = await getDbName();
+    return `${endpoint}/user_task/${db_name}/`;
+}
+
+export const empLoginURL = async () => {
+  const db_name = await getDbName();
+  return `${endpoint}/emp_user_login/${db_name}/`;
+}; 
+
+export const getDbList = `${endpoint}/get_applicable_site/`;

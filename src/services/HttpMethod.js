@@ -26,6 +26,13 @@ export const authAxiosPost = async (url, data) => {
   }).post(url, data)
 };
 
+export const authAxiosGET = async (url, data) => {
+  return axios.create({
+      baseURL: endpoint,
+      params: data,
+  }).get(url)
+};
+
 
 
 export const authAxiosFilePost = async (url, data) => {
