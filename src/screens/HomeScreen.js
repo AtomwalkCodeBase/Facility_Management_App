@@ -9,6 +9,7 @@ import {
   Alert,
   Image,
   SafeAreaView,
+  TouchableOpacity,
 } from "react-native";
 import { useRoute } from "@react-navigation/native";
 import { AppContext } from "../../context/AppContext";
@@ -23,13 +24,15 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import ModalComponent from "../components/ModalComponent";
 import Dropdown from "../components/Dropdown";
 import NewTaskCard from "../components/NewTaskCard";
+import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 
 const { width, height } = Dimensions.get("window");
 
-const dayFilterOptions = ["TODAY", "NEXT 3", "PAST", "ALL"];
-const statusFilterOptions = ["Planned", "Completed", "Not planned"];
+const dayFilterOptions = ["Today", "Next 3 Days", "Past", "All"];
+const statusFilterOptions = ["Planned", "Completed", "Not Planned"];
 
-const HomePage = ({ navigation }) => {
+const HomeScreen = ({ navigation }) => {
   const route = useRoute();
   const { userToken } = useContext(AppContext);
   const [company, setCompany] = useState({});
@@ -42,7 +45,7 @@ const HomePage = ({ navigation }) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const fadeAnim = useState(new Animated.Value(0))[0];
-  const [selectedDayFilter, setSelectedDayFilter] = useState("TODAY");
+  const [selectedDayFilter, setSelectedDayFilter] = useState("Today");
   const [selectedStatusFilter, setSelectedStatusFilter] = useState("Planned");
   const [tasks, setTasks] = useState([]);
 
@@ -89,10 +92,10 @@ const HomePage = ({ navigation }) => {
 
   const fetchTasks = async (dayFilter, statusFilter) => {
     let taskType = "ALL";
-    if (dayFilter === "TODAY") taskType = "D0";
-    else if (dayFilter === "NEXT 3") taskType = "D3";
-    else if (dayFilter === "PAST") taskType = "PAST";
-    else if (dayFilter === "CANCEL") taskType = "CANCEL";
+    if (dayFilter === "Today") taskType = "D0";
+    else if (dayFilter === "Next 3 Days") taskType = "D3";
+    else if (dayFilter === "Past") taskType = "PAST";
+    else if (dayFilter === "Cancel") taskType = "CANCEL";
 
     try {
       const res = await getUserTasks(taskType, "", "");
@@ -184,157 +187,300 @@ const HomePage = ({ navigation }) => {
     setModalVisible(false);
   };
 
+  const renderFilterPill = (label, selected, onPress) => (
+    <TouchableOpacity
+      onPress={onPress}
+      style={[
+        styles.filterPill,
+        selected && styles.filterPillSelected,
+      ]}
+    >
+      <Text style={[
+        styles.filterPillText,
+        selected && styles.filterPillTextSelected
+      ]}>
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor="#6a11cb" />
-      <View style={styles.fixedHeader}>
-        <View style={styles.userSection}>
-          <View style={styles.userAvatar}>
+      <StatusBar barStyle="light-content" backgroundColor="#4A6FA5" />
+      
+      {/* Header with Gradient Background */}
+      <LinearGradient
+        colors={['#4A6FA5', '#6B8CBE']}
+        style={styles.header}
+      >
+        <View style={styles.headerContent}>
+          <View style={styles.userInfo}>
             <Image
               source={{
-                uri:
-                  company.image ||
-                  "https://home.atomwalk.com/static/media/Atom_walk_logo-removebg-preview.21661b59140f92dd7ced.png",
+                uri: company.image || "https://home.atomwalk.com/static/media/Atom_walk_logo-removebg-preview.21661b59140f92dd7ced.png",
               }}
               style={styles.profileImage}
             />
+            <View style={styles.userTextContainer}>
+              <Text style={styles.welcomeText}>Welcome back</Text>
+              <Text style={styles.companyName}>
+                {company.name || "Atomwalk Technologies"}
+              </Text>
+            </View>
           </View>
-          <View>
-            {/* <Text style={styles.userGreeting}>Hello</Text> */}
-            <Text style={styles.userMessage}>
-             {company.name || "Atomwalk Technologies"}
+          
+          <TouchableOpacity style={styles.notificationButton}>
+            <Ionicons name="notifications-outline" size={24} color="white" />
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
+
+      {/* Main Content */}
+      <View style={styles.contentContainer}>
+        {/* Task Summary Cards */}
+        <View style={styles.summaryContainer}>
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryNumber}>{tasks.length}</Text>
+            <Text style={styles.summaryLabel}>Total Tasks</Text>
+          </View>
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryNumber}>
+              {tasks.filter(t => t.status === "Completed").length}
             </Text>
+            <Text style={styles.summaryLabel}>Completed</Text>
+          </View>
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryNumber}>
+              {tasks.filter(t => t.status === "Planned").length}
+            </Text>
+            <Text style={styles.summaryLabel}>Pending</Text>
           </View>
         </View>
 
-        <View style={styles.filterContainer}>
-          <Dropdown
-            label="Filter by Day"
-            placeholder="Select Day"
-            options={dayFilterOptions}
-            selectedValue={selectedDayFilter}
-            onSelect={setSelectedDayFilter}
-            icon="calendar"
-            style={styles.dropdownStyle}
-          />
-          <Dropdown
-            label="Filter by Status"
-            placeholder="Select Status"
-            options={statusFilterOptions}
-            selectedValue={selectedStatusFilter}
-            onSelect={setSelectedStatusFilter}
-            icon="filter"
-            style={styles.dropdownStyle}
-          />
+        {/* Filter Section */}
+        <View style={styles.filterSection}>
+          <Text style={styles.sectionTitle}>Date Filter</Text>
+          <View style={styles.filterRow}>
+            {dayFilterOptions.map(option => (
+              renderFilterPill(
+                option,
+                selectedDayFilter === option,
+                () => setSelectedDayFilter(option)
+              )
+            ))}
+          </View>
+          
+          <Text style={[styles.sectionTitle, { marginTop: 15 }]}>Status Filter</Text>
+          <View style={styles.filterRow}>
+            {statusFilterOptions.map(option => (
+              renderFilterPill(
+                option,
+                selectedStatusFilter === option,
+                () => setSelectedStatusFilter(option)
+              )
+            ))}
+          </View>
         </View>
+
+        {/* Task List */}
+        <View style={styles.taskListHeader}>
+          <Text style={styles.taskListTitle}>My Tasks</Text>
+          <Text style={styles.taskCount}>{tasks.length} tasks</Text>
+        </View>
+
+        <GestureHandlerRootView style={styles.taskListContainer}>
+          {tasks.length > 0 ? (
+            <FlatList
+              data={tasks}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <NewTaskCard task={item} onMarkComplete={handleTaskComplete} />
+              )}
+              contentContainerStyle={styles.listContent}
+              showsVerticalScrollIndicator={false}
+            />
+          ) : (
+            <View style={styles.noTaskContainer}>
+              <Ionicons name="checkmark-done-circle" size={60} color="#D3D3D3" />
+              <Text style={styles.noTaskText}>No Tasks Available</Text>
+              <Text style={styles.noTaskSubText}>You're all caught up!</Text>
+            </View>
+          )}
+        </GestureHandlerRootView>
       </View>
 
-      <GestureHandlerRootView style={styles.taskListContainer}>
-        {tasks.length > 0 ? (
-          <FlatList
-            data={tasks}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <NewTaskCard task={item} onMarkComplete={handleTaskComplete} />
-            )}
-            ListHeaderComponent={() => (
-              <Text style={styles.taskHeading}>My Tasks</Text>
-            )}
-            contentContainerStyle={styles.listContent}
-            showsVerticalScrollIndicator={false}
-          />
-        ) : (
-          <View style={styles.noTaskContainer}>
-            <Text style={styles.noTaskText}>No Tasks Available</Text>
-          </View>
-        )}
-        <ModalComponent
-          modalVisible={modalVisible}
-          setModalVisible={setModalVisible}
-          confirmCompletion={confirmCompletion}
-          cancelCompletion={cancelCompletion}
-          isUpdating={isUpdating}
-        />
-      </GestureHandlerRootView>
+      <ModalComponent
+        modalVisible={modalVisible}
+        setModalVisible={setModalVisible}
+        confirmCompletion={confirmCompletion}
+        cancelCompletion={cancelCompletion}
+        isUpdating={isUpdating}
+      />
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   safeArea: {
-    marginTop: 30,
     flex: 1,
-    backgroundColor: "#f8f8f8",
+    backgroundColor: "#F5F7FA",
   },
-  fixedHeader: {
-    backgroundColor: "#6A1B9A",
-    paddingVertical: height * 0.02,
+  header: {
+    paddingTop: height * 0.05,
+    paddingBottom: height * 0.03,
     paddingHorizontal: width * 0.05,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
     elevation: 5,
   },
-  userSection: {
-    flexDirection: "row",
-    alignItems: "center",
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  userAvatar: {
-    width: width * 0.12,
-    height: width * 0.12,
-    backgroundColor: "#E8E5DE",
-    borderRadius: width * 0.06,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: width * 0.04,
-    marginTop: height * 0.02,
+  userInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   profileImage: {
-    width: "100%",
-    height: "100%",
+    width: width * 0.12,
+    height: width * 0.12,
     borderRadius: width * 0.06,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.3)',
   },
-  userGreeting: {
-    fontSize: width * 0.045,
-    color: "#FAFAFA",
+  userTextContainer: {
+    marginLeft: width * 0.04,
   },
-  userMessage: {
-    width: width * 0.7,
-    fontSize: width * 0.06,
-    color: "#FFFFFF",
-    fontWeight: "600",
+  welcomeText: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.8)',
   },
-  filterContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: height * 0.03,
+  companyName: {
+    fontSize: 18,
+    color: '#FFFFFF',
+    fontWeight: '600',
+    marginTop: 4,
   },
-  dropdownStyle: {
+  notificationButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  contentContainer: {
     flex: 1,
-    marginHorizontal: width * 0.02,
+    paddingHorizontal: width * 0.05,
+    paddingTop: 20,
+  },
+  summaryContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  summaryCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 15,
+    width: width * 0.28,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  summaryNumber: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#4A6FA5',
+    marginBottom: 5,
+  },
+  summaryLabel: {
+    fontSize: 12,
+    color: '#6C757D',
+  },
+  filterSection: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#343A40',
+    marginBottom: 10,
+  },
+  filterRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: -8,
+  },
+  filterPill: {
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#F1F5F9',
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  filterPillSelected: {
+    backgroundColor: '#4A6FA5',
+  },
+  filterPillText: {
+    fontSize: 14,
+    color: '#6C757D',
+  },
+  filterPillTextSelected: {
+    color: '#FFFFFF',
+  },
+  taskListHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  taskListTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#343A40',
+  },
+  taskCount: {
+    fontSize: 14,
+    color: '#6C757D',
   },
   taskListContainer: {
-    flex: 1,
-    marginTop: height * 0.03,
-    marginHorizontal: width * 0.04,
-  },
-  taskHeading: {
-    fontSize: width * 0.055,
-    fontWeight: "500",
-    marginBottom: height * 0.01,
+    // flex: 1,
   },
   listContent: {
     paddingBottom: height * 0.1,
   },
   noTaskContainer: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingBottom: height * 0.2,
   },
   noTaskText: {
-    fontSize: width * 0.05,
-    fontWeight: "bold",
-    color: "#888",
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#6C757D',
+    marginTop: 15,
+  },
+  noTaskSubText: {
+    fontSize: 14,
+    color: '#ADB5BD',
+    marginTop: 5,
   },
 });
 
-export default HomePage;
+export default HomeScreen;

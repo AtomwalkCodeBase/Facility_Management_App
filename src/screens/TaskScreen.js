@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   activeFilter: {
-    backgroundColor: '#6A1B9A',
+    backgroundColor: 'rgb(88, 139, 214)',
   },
   activeFilterText: {
     color: '#FFF',

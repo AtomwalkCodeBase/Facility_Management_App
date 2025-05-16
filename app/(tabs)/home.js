@@ -23,14 +23,17 @@ const Home = () => {
   }, []);
 
   return (
-    <>
-      {/* {isManager ? <ManagerHomePage /> : <HomeScreen />} */}
+<SafeAreaView style={{ flex: 1 }}>
       <HomeScreen />
       
-	{/* <NewHomeScreen /> */}
-      <PinPopup />
-    </>
+      </SafeAreaView>
+
   );
 };
 
 export default Home;
+    // <SafeAreaView style={{ flex: 1 }}>
+      // <PinPopup />
+      {/* {isManager ? <ManagerHomePage /> : <HomeScreen />} */}
+      	{/* <NewHomeScreen /> */}
+  // </SafeAreaView>
