@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FlatList, Dimensions } from 'react-native';
+import { FlatList, Dimensions, View, Animated } from 'react-native';
 import styled from 'styled-components/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useRouter } from 'expo-router';
@@ -7,7 +7,6 @@ import HeaderComponent from '../components/HeaderComponent';
 import ModalComponent from '../components/ModalComponent';
 import DropdownPicker from '../components/DropdownPicker';
 import { getActivityList } from '../services/productServices';
-import Loader from '../components/old_components/Loader';
 
 const { width } = Dimensions.get('window');
 
@@ -123,10 +122,82 @@ const ClearFilterText = styled.Text`
     font-weight: bold;
 `;
 
+const SkeletonCard = styled.View`
+    background-color: #e0e0e0;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    padding: 15px;
+    elevation: 4;
+    shadow-color: #000;
+    shadow-offset: 0px 2px;
+    shadow-opacity: 0.1;
+    shadow-radius: 4px;
+    overflow: hidden;
+`;
+
+const SkeletonRow = styled.View`
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2px;
+`;
+
+const SkeletonText = styled.View`
+    background-color: #e0e0e0;
+    border-radius: 4px;
+    height: 16px;
+    margin-bottom: 5px;
+`;
+
+const SkeletonBadge = styled.View`
+    background-color: #e0e0e0;
+    border-radius: 20px;
+    padding: 4px 8px;
+    width: 80px;
+    height: 20px;
+`;
+
+const SkeletonButton = styled.View`
+    background-color: #e0e0e0;
+    width: ${(props) => (props.fullWidth ? `${width * 0.85}px` : `${width * 0.4}px`)};
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+`;
+
+const SkeletonFilter = styled.View`
+    background-color: #e0e0e0;
+    border-radius: 8px;
+    height: 45px;
+    width: 95%;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    overflow: hidden;
+`;
+
+const SkeletonClearFilter = styled.View`
+    background-color: #e0e0e0;
+    padding: 8px 15px;
+    border-radius: 8px;
+    width: 50%;
+    height: 35px;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 5px;
+    overflow: hidden;
+`;
+
+const Shimmer = styled(Animated.View)`
+    flex: 1;
+    background-color: rgba(255, 255, 255, 0.2);
+    width: 100px;
+    height: 100%;
+`;
+
 const ActivityScreen = (props) => {
     const navigation = useNavigation();
     const router = useRouter();
-    const [isLoading, setIsLoading] = useState(true); // Loader state
+    const [isLoading, setIsLoading] = useState(true);
     const [isModalVisible, setModalVisible] = useState(false);
     const [selectedActivity, setSelectedActivity] = useState(null);
     const [activities, setActivities] = useState([]);
@@ -134,6 +205,24 @@ const ActivityScreen = (props) => {
     const [filterValue, setFilterValue] = useState('');
     const activityType = props.data;
     const project = props.id;
+
+    // Shimmer animation setup
+    const shimmerAnim = useState(new Animated.Value(0))[0];
+
+    useEffect(() => {
+        Animated.loop(
+            Animated.timing(shimmerAnim, {
+                toValue: 1,
+                duration: 1000,
+                useNativeDriver: true,
+            })
+        ).start();
+    }, [shimmerAnim]);
+
+    const shimmerTranslateX = shimmerAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [-100, 100],
+    });
 
     useEffect(() => {
         fetchActivityDetails();
@@ -156,8 +245,7 @@ const ActivityScreen = (props) => {
         try {
             const res = await getActivityList();
             let fetchedActivities = res?.data?.a_list || [];
-    
-            // Helper function to parse 'DD-MMM-YYYY' into a Date object
+
             const parseDate = (dateStr) => {
                 if (!dateStr) return null;
                 const [day, month, year] = dateStr.split('-');
@@ -167,10 +255,9 @@ const ActivityScreen = (props) => {
                 };
                 return new Date(year, months[month], day);
             };
-    
-            const currentDate = new Date(); // Current date as a Date object
-    
-            // Map activity_status codes to status labels
+
+            const currentDate = new Date();
+
             const mapActivityStatus = {
                 '01': 'PLANNED',
                 '02': 'IN PROGRESS',
@@ -179,14 +266,11 @@ const ActivityScreen = (props) => {
                 '09': 'NOT ALLOCATED',
                 '99': 'NOT REQUIRED',
             };
-    
-            // Update the activities based on due_date, activity_status, and conditions
+
             fetchedActivities = fetchedActivities.map((activity) => {
-                const dueDate = parseDate(activity.due_date); // Parse due_date to Date object
-    
-                let status = mapActivityStatus[activity.activity_status] || 'UNKNOWN'; // Default to 'UNKNOWN'
-    
-                // Check if overdue
+                const dueDate = parseDate(activity.due_date);
+                let status = mapActivityStatus[activity.activity_status] || 'UNKNOWN';
+
                 if ((activity.activity_status === '01' || activity.activity_status === '02') && activity.is_over_due) {
                     status = 'OVER-DUE';
                 } else if (dueDate && dueDate < currentDate && status === 'IN PROGRESS') {
@@ -194,14 +278,13 @@ const ActivityScreen = (props) => {
                 } else if (activity.no_hold === 0 && activity.no_pending === 0) {
                     status = 'COMPLETED';
                 }
-    
+
                 return {
                     ...activity,
                     status,
                 };
             });
-    
-            // Filter activities based on activityType
+
             if (activityType === 'PENDING') {
                 fetchedActivities = fetchedActivities.filter(
                     (activity) => activity.status !== 'COMPLETED' && activity.no_pending !== 0
@@ -215,19 +298,14 @@ const ActivityScreen = (props) => {
                     (activity) => activity.status === 'COMPLETED'
                 );
             }
-    
+
             setActivities(fetchedActivities);
         } catch (error) {
             console.error('Error fetching activities:', error);
         } finally {
-            setIsLoading(false); // Hide loader after fetching
+            setIsLoading(false);
         }
-        
     };
-    
-    
-    
-    
 
     const applyFilter = () => {
         if (!filterValue) {
@@ -257,7 +335,7 @@ const ActivityScreen = (props) => {
         });
     };
 
-    const handleInventoryClick = (id,type) => {
+    const handleInventoryClick = (id, type) => {
         router.push({
             pathname: 'InventoryData',
             params: { ref_num: id, ref_type: type },
@@ -283,95 +361,105 @@ const ActivityScreen = (props) => {
     const getBadgeColor = (status) => {
         switch (status) {
             case 'COMPLETED':
-                return '#28a745'; // Green for completed
+                return '#28a745';
             case 'OVER-DUE':
-                return ' #FF5733'; // Red for overdue
+                return '#FF5733';
             case 'IN PROGRESS':
-                return '#ffc107'; // Yellow for in progress
+                return '#ffc107';
             default:
-                return '#6c757d'; // Gray for unknown or default status
+                return '#6c757d';
         }
     };
 
     const getBadgeTextColor = (status) => {
         switch (status) {
             case 'COMPLETED':
-                return '#fff'; // Green for completed
+                return '#fff';
             case 'OVER-DUE':
-                return '#fff'; // Red for overdue
+                return '#fff';
             case 'IN PROGRESS':
-                return '#454545'; // Yellow for in progress
+                return '#454545';
             default:
-                return '#fff'; // Gray for unknown or default status
+                return '#fff';
         }
     };
-    
 
     const dropdownData = getUniqueRefNums();
 
-    console.log('Activity List---',activities)
-
-    const renderItem = ({ item: activity }) => (
-        <Card>
-            <Row>
-                <BoldText>{activity.sale_order_no || activity.ref_num}</BoldText>
-                <StatusBadge bgColor={getBadgeColor(activity.status)}>
-                <StatusText textColor={getBadgeTextColor(activity.status)}>{activity.status}</StatusText>
-            </StatusBadge>
-            </Row>
-            <SubText>{activity.ref_num || 'None'}</SubText>
-            <SubText>{activity.activity_name || 'None'}</SubText>
-            <SubText>Due Date: {activity.due_date || 'N/A'}</SubText>
-
+    const renderSkeletonCard = () => (
+        <SkeletonCard>
+            <SkeletonRow>
+                <SkeletonText style={{ width: width * 0.4 }} />
+                <SkeletonBadge />
+            </SkeletonRow>
+            <SkeletonText style={{ width: width * 0.3 }} />
+            <SkeletonText style={{ width: width * 0.5 }} />
+            <SkeletonText style={{ width: width * 0.2 }} />
             <ButtonRow>
-                {activity.status !== 'COMPLETED' && activity.activity_status === '02' ? (
-                    <>
-                        <ActionButton
-                            bgColor="#28a745"
-                            onPress={() => handleCompleteClick(activity.activity_id)}
-                        >
-                            <ButtonText>Mark as Completed</ButtonText>
-                        </ActionButton>
-                        <ActionButton
-                            bgColor="#f77f00"
-                            onPress={() => handleQcClick(activity.activity_id)}
-                        >
-                            <ButtonText>QC Data Update</ButtonText>
-                        </ActionButton>
-                        <ActionButton
-                            bgColor="#4285f4"
-                            onPress={() => handleInventoryClick(activity.activity_id, 'INV_IN')}
-                        >
-                            <ButtonText>Inventory Update</ButtonText>
-                        </ActionButton>
-                        <ActionButton
-                            bgColor="#4285f4"
-                            onPress={() => handleInventoryClick(activity.activity_id, 'INV_OUT')}
-                        >
-                            <ButtonText>Production Update</ButtonText>
-                        </ActionButton>
-                    </>
-                ): (
-                    <ActionButton
-                        bgColor="#4285f4"
-                        fullWidth={true}
-                        onPress={() => handleViewDetails(activity)}
-                    >
-                        <ButtonText>View Details</ButtonText>
-                    </ActionButton>
-                )}
+                <SkeletonButton style={{ width: width * 0.4 }} >
+                    <Shimmer style={{ transform: [{ translateX: shimmerTranslateX }] }} />
+                </SkeletonButton>
+                <SkeletonButton style={{ width: width * 0.4 }} >
+                    <Shimmer style={{ transform: [{ translateX: shimmerTranslateX }] }} />
+                </SkeletonButton>
             </ButtonRow>
-
-        </Card>
+            <Shimmer style={{ transform: [{ translateX: shimmerTranslateX }] }} />
+        </SkeletonCard>
     );
+
+    if (isLoading) {
+        return (
+            <GradientBackground>
+                <HeaderComponent
+                    headerTitle={
+                        activityType === 'PENDING'
+                            ? 'Pending Activities'
+                            : activityType === 'OverDue'
+                            ? 'OverDue Activities'
+                            : activityType === 'Completed'
+                            ? 'Completed Activities'
+                            : 'My Activities'
+                    }
+                    onBackPress={handleBackPress}
+                    loading={true} // Pass loading prop to HeaderComponent
+                />
+                <FilterContainer>
+                    <SkeletonFilter>
+                        <Shimmer style={{ transform: [{ translateX: shimmerTranslateX }] }} />
+                    </SkeletonFilter>
+                    {filterValue && (
+                        <ClearFilterContainer>
+                            <SkeletonClearFilter>
+                                <Shimmer style={{ transform: [{ translateX: shimmerTranslateX }] }} />
+                            </SkeletonClearFilter>
+                        </ClearFilterContainer>
+                    )}
+                </FilterContainer>
+                <FlatList
+                    data={[1, 2, 3]} // Render 3 skeleton cards
+                    keyExtractor={(item) => item.toString()}
+                    renderItem={renderSkeletonCard}
+                    contentContainerStyle={{ padding: 10 }}
+                    showsVerticalScrollIndicator={false}
+                />
+            </GradientBackground>
+        );
+    }
 
     return (
         <GradientBackground>
             <HeaderComponent
-                headerTitle={activityType === 'PENDING' ? 'Pending Activities' : activityType === 'OverDue' ? 'OverDue Activities' : activityType === 'Completed' ? 'Completed Activities' : 'My Activities'}
+                headerTitle={
+                    activityType === 'PENDING'
+                        ? 'Pending Activities'
+                        : activityType === 'OverDue'
+                        ? 'OverDue Activities'
+                        : activityType === 'Completed'
+                        ? 'Completed Activities'
+                        : 'My Activities'
+                }
                 onBackPress={handleBackPress}
             />
-
             <FilterContainer>
                 <DropdownPicker
                     label="Filter by Project Num"
@@ -379,7 +467,6 @@ const ActivityScreen = (props) => {
                     value={filterValue}
                     setValue={setFilterValue}
                 />
-
                 {filterValue && (
                     <ClearFilterContainer>
                         <ClearFilterButton onPress={() => setFilterValue('')}>
@@ -388,17 +475,65 @@ const ActivityScreen = (props) => {
                     </ClearFilterContainer>
                 )}
             </FilterContainer>
-
-            <Loader visible={isLoading} />
-
             <FlatList
                 data={filteredActivities}
                 keyExtractor={(item) => item.activity_id.toString()}
-                renderItem={renderItem}
+                renderItem={({ item: activity }) => (
+                    <Card>
+                        <Row>
+                            <BoldText>{activity.sale_order_no || activity.ref_num}</BoldText>
+                            <StatusBadge bgColor={getBadgeColor(activity.status)}>
+                                <StatusText textColor={getBadgeTextColor(activity.status)}>
+                                    {activity.status}
+                                </StatusText>
+                            </StatusBadge>
+                        </Row>
+                        <SubText>{activity.ref_num || 'None'}</SubText>
+                        <SubText>{activity.activity_name || 'None'}</SubText>
+                        <SubText>Due Date: {activity.due_date || 'N/A'}</SubText>
+                        <ButtonRow>
+                            {activity.status !== 'COMPLETED' && activity.activity_status === '02' ? (
+                                <>
+                                    <ActionButton
+                                        bgColor="#28a745"
+                                        onPress={() => handleCompleteClick(activity.activity_id)}
+                                    >
+                                        <ButtonText>Mark as Completed</ButtonText>
+                                    </ActionButton>
+                                    <ActionButton
+                                        bgColor="#f77f00"
+                                        onPress={() => handleQcClick(activity.activity_id)}
+                                    >
+                                        <ButtonText>QC Data Update</ButtonText>
+                                    </ActionButton>
+                                    <ActionButton
+                                        bgColor="#4285f4"
+                                        onPress={() => handleInventoryClick(activity.activity_id, 'INV_IN')}
+                                    >
+                                        <ButtonText>Inventory Update</ButtonText>
+                                    </ActionButton>
+                                    <ActionButton
+                                        bgColor="#4285f4"
+                                        onPress={() => handleInventoryClick(activity.activity_id, 'INV_OUT')}
+                                    >
+                                        <ButtonText>Production Update</ButtonText>
+                                    </ActionButton>
+                                </>
+                            ) : (
+                                <ActionButton
+                                    bgColor="#4285f4"
+                                    fullWidth={true}
+                                    onPress={() => handleViewDetails(activity)}
+                                >
+                                    <ButtonText>View Details</ButtonText>
+                                </ActionButton>
+                            )}
+                        </ButtonRow>
+                    </Card>
+                )}
                 contentContainerStyle={{ padding: 10 }}
                 showsVerticalScrollIndicator={false}
             />
-
             {selectedActivity && (
                 <ModalComponent
                     isVisible={isModalVisible}

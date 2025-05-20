@@ -197,23 +197,23 @@ const handleCompanyChange = async (item) => {
   };
 
   const handlePressPassword = async () => {
-  try {
+  // try {
     // Mark that fingerprint is supported
     // await AsyncStorage.setItem('useFingerprint', 'true');
 
     // Retrieve the previously used database name
-    const prevDbName = await AsyncStorage.getItem('previousDbName');
+    // const prevDbName = await AsyncStorage.getItem('previousDbName');
 
     // If available, set it as the current dbName
-    if (prevDbName) {
-      await AsyncStorage.setItem('dbName', prevDbName);
-    }
+    // if (prevDbName) {
+    //   await AsyncStorage.setItem('dbName', prevDbName);
+    // }
 
     // Navigate to the PIN screen
     router.push({ pathname: 'PinScreen' });
-  } catch (error) {
-    console.error('Error handling PIN/fingerprint login:', error);
-  }
+  // } catch (error) {
+  //   console.error('Error handling PIN/fingerprint login:', error);
+  // }
 };
 
 
@@ -311,11 +311,11 @@ useEffect(() => {
 
   return (
     <SafeAreaContainer>
-      <StatusBar barStyle="light-content" backgroundColor="#a970ff" />
+      <StatusBar barStyle="light-content" backgroundColor="#4A6FA5" />
           <Container>
             <Header style={styles.headerContainer}>
               <LinearGradient 
-                colors={['#a970ff', '#8a5bda']} 
+                colors={['#4A6FA5', '#6B8CBE']} 
                 start={[0, 0]} 
                 end={[1, 1]}
                 style={styles.headerGradient}
@@ -414,7 +414,7 @@ useEffect(() => {
                     </InputContainer>
                   </Card>
 
-                  {(userPin && bioStatus) && (
+                  {userPin && (
                     <AlternativeLogin onPress={handlePressPassword}>
                       <FingerprintIcon>
                         <Entypo name="fingerprint" size={scaleWidth(24)} color="#fff" />
@@ -669,7 +669,7 @@ const Footer = styled.View`
 `;
 
 const FooterText = styled.Text`
-  color: #a970ff;
+  color: #4A6FA5 ;
   font-size: ${scaleWidth(14)}px;
   font-weight: 500;
 `;

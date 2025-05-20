@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, Dimensions, ScrollView } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, Dimensions, ScrollView, Switch } from 'react-native';
 import { MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import { AppContext } from '../../context/AppContext';
 import { getProfileInfo } from '../services/authServices';
@@ -9,6 +9,7 @@ import QRModal from '../components/QRModal';
 import HeaderComponent from '../components/HeaderComponent';
 import Loader from '../components/old_components/Loader';
 import moment from 'moment';
+import ConfirmationModal from '../components/ConfirmationModal';
 
 const { width } = Dimensions.get('window');
 
@@ -18,6 +19,9 @@ const ProfileScreen = () => {
   const [userPin, setUserPin] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isBiometricModalVisible, setIsBiometricModalVisible] = useState(false); // New state for biometric modal
+  const [biometricEnabled, setBiometricEnabled] = useState(false);
+  const [pendingBiometricValue, setPendingBiometricValue] = useState(null);
 
   const router = useRouter();
   const navigation = useNavigation();
@@ -35,19 +39,56 @@ const ProfileScreen = () => {
       }
     };
 
-    const fetchUserPin = async () => {
-      const storedPin = await AsyncStorage.getItem('userPin');
-      setUserPin(storedPin);
-    };
+  // Load user pin and biometric setting from AsyncStorage
+    const fetchUserData = async () => {
+      try {
+        const storedPin = await AsyncStorage.getItem('userPin');
+        setUserPin(storedPin);
 
+        const biometric = await AsyncStorage.getItem('userBiometric');
+        setBiometricEnabled(biometric === 'true');
+      } catch (error) {
+        console.error('Error loading user data:', error);
+      }
+    };
+    fetchUserData();
     fetchProfile();
-    fetchUserPin();
   }, []);
 
   const handleBackPress = () => navigation.goBack();
   const handlePressPassword = () => router.push({ pathname: 'ResetPassword' });
   const handleQRPress = () => setIsModalVisible(true);
   const handleCloseModal = () => setIsModalVisible(false);
+
+    const handleBiometricToggle = (value) => {
+    setPendingBiometricValue(value); // Store the intended toggle value
+    setIsBiometricModalVisible(true); // Show confirmation modal
+  };
+
+    // Confirm biometric toggle
+  const confirmBiometricToggle = async () => {
+    try {
+      setBiometricEnabled(pendingBiometricValue);
+      if (pendingBiometricValue) {
+        await AsyncStorage.setItem('userBiometric', 'true');
+      } else {
+        await AsyncStorage.removeItem('userBiometric');
+      }
+    } catch (error) {
+      console.error('Error updating biometric setting:', error);
+      setBiometricEnabled(!pendingBiometricValue); // Revert on error
+      setError({ visible: true, message: 'Failed to update biometric setting' });
+    } finally {
+      setIsBiometricModalVisible(false);
+      setPendingBiometricValue(null);
+    }
+  };
+
+  // Cancel biometric toggle
+  const cancelBiometricToggle = () => {
+    setIsBiometricModalVisible(false);
+    setPendingBiometricValue(null);
+  };
 
   const formatDate = (dateString) => {
     if (!dateString) return 'Not available';
@@ -138,7 +179,27 @@ const ProfileScreen = () => {
           </View>
 
           {/* Action Buttons */}
+
+            <View style={styles.optionItem}>
+              <View style={styles.optionIconContainer}>
+                <MaterialIcons name="fingerprint" size={22} color="#4A6FA5" />
+              </View>
+              <View style={styles.optionTextContainer}>
+                <Text style={styles.optionText}>Biometric Authentication</Text>
+                <Text style={styles.optionDescription}>
+                  Use fingerprint to log in
+                </Text>
+              </View>
+              <Switch
+                value={biometricEnabled}
+                onValueChange={handleBiometricToggle}
+                trackColor={{ false: "#eee", true: "#4A6FA5" }}
+                thumbColor={biometricEnabled ? "#fff" : "#FFFFFF"}
+              />
+            </View>
+
           <View style={styles.actionContainer}>
+
             <TouchableOpacity 
               style={[styles.actionButton, styles.primaryButton]}
               onPress={handlePressPassword}
@@ -166,6 +227,17 @@ const ProfileScreen = () => {
             onClose={handleCloseModal}
             qrValue={profile?.emp_id || 'EMP-007'}
           />
+
+          <ConfirmationModal
+        visible={isBiometricModalVisible}
+        message={`Are you sure you want to ${
+          pendingBiometricValue ? 'enable' : 'disable'
+        } biometric authentication?`}
+        onConfirm={confirmBiometricToggle}
+        onCancel={cancelBiometricToggle}
+        confirmText={pendingBiometricValue ? 'Enable' : 'Disable'}
+        cancelText="Cancel"
+      />
         </ScrollView>
       )}
     </>
@@ -308,6 +380,41 @@ const styles = StyleSheet.create({
   },
   logoutText: {
     color: '#e74c3c',
+  },
+
+   optionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: "#FFFFFF"
+  },
+  optionIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#FFFFFF" ,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  optionTextContainer: {
+    flex: 1,
+  },
+  optionText: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: "#000",
+  },
+  optionDescription: {
+    fontSize: 12,
+    color: '#95a5a6',
+    marginTop: 2,
+  },
+  optionDivider: {
+    height: 1,
+    // backgroundColor: colors.muted,
+    marginLeft: 68,
   },
 });
 

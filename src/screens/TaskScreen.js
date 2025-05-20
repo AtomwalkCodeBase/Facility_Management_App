@@ -1,11 +1,12 @@
 import { View, Text, Dimensions, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useEffect, useState } from 'react';
-import { getUserTasks, updateTask } from '../services/productServices'; // Added updateTask import
+import { getUserTasks, updateTask } from '../services/productServices';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import NewTaskCard from '../components/NewTaskCard';
 import ModalComponent from '../components/ModalComponent';
 import { Alert } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 const { width, height } = Dimensions.get('window');
 
@@ -52,7 +53,7 @@ const TaskScreen = () => {
       };
 
       await updateTask(taskData, 'Y', 'N');
-      fetchTasks(selectedFilter); // Use selectedFilter instead of undefined variables
+      fetchTasks(selectedFilter);
     } catch (error) {
       console.error('Error completing task:', error);
       Alert.alert('Error', error.message || 'Failed to complete task');
@@ -64,7 +65,7 @@ const TaskScreen = () => {
   const fetchTasks = async (taskType) => {
     try {
       const res = await getUserTasks(taskType, '', '');
-      const formattedTasks = res.data.map((task) => ({
+      const formattedTasks = (res.data || []).map((task) => ({
         id: task.id.toString(),
         title: task.name || 'Untitled Task',
         description: task.remarks || '',
@@ -90,6 +91,7 @@ const TaskScreen = () => {
       setTasks(formattedTasks);
     } catch (error) {
       console.error('Error fetching tasks:', error);
+      setTasks([]); // Ensure tasks is set to empty array on error
     }
   };
 
@@ -98,33 +100,33 @@ const TaskScreen = () => {
   }, [selectedFilter]);
 
   return (
-    <>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <SafeAreaView style={styles.container}>
-          {/* Day Filter Buttons */}
-          <View style={styles.filterContainer}>
-            {dayFilterOptions.map((filter) => (
-              <TouchableOpacity
-                key={filter.value}
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaView style={styles.container}>
+        {/* Day Filter Buttons */}
+        <View style={styles.filterContainer}>
+          {dayFilterOptions.map((filter) => (
+            <TouchableOpacity
+              key={filter.value}
+              style={[
+                styles.filterButton,
+                selectedFilter === filter.value && styles.activeFilter,
+              ]}
+              onPress={() => setSelectedFilter(filter.value)}
+            >
+              <Text
                 style={[
-                  styles.filterButton,
-                  selectedFilter === filter.value && styles.activeFilter,
+                  styles.filterText,
+                  selectedFilter === filter.value && styles.activeFilterText,
                 ]}
-                onPress={() => setSelectedFilter(filter.value)}
               >
-                <Text
-                  style={[
-                    styles.filterText,
-                    selectedFilter === filter.value && styles.activeFilterText,
-                  ]}
-                >
-                  {filter.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+                {filter.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
-          {/* Task List */}
+        {/* Task List or Empty State */}
+        {tasks.length > 0 ? (
           <FlatList
             data={tasks}
             keyExtractor={(item) => item.id}
@@ -134,16 +136,23 @@ const TaskScreen = () => {
             contentContainerStyle={styles.taskListContainer}
             showsVerticalScrollIndicator={false}
           />
-      <ModalComponent
-        modalVisible={modalVisible}
-        setModalVisible={setModalVisible}
-        confirmCompletion={confirmCompletion}
-        cancelCompletion={cancelCompletion}
-        isUpdating={isUpdating}
-      />
-        </SafeAreaView>
-      </GestureHandlerRootView>
-    </>
+        ) : (
+          <View style={styles.noTaskContainer}>
+            <Ionicons name="checkmark-done-circle" size={60} color="#D3D3D3" />
+            <Text style={styles.noTaskText}>No Tasks Available</Text>
+            <Text style={styles.noTaskSubText}>You're all caught up!</Text>
+          </View>
+        )}
+
+        <ModalComponent
+          modalVisible={modalVisible}
+          setModalVisible={setModalVisible}
+          confirmCompletion={confirmCompletion}
+          cancelCompletion={cancelCompletion}
+          isUpdating={isUpdating}
+        />
+      </SafeAreaView>
+    </GestureHandlerRootView>
   );
 };
 
@@ -178,9 +187,26 @@ const styles = StyleSheet.create({
     color: '#FFF',
   },
   taskListContainer: {
-    flexGrow: 1, // Ensures the content grows to fill the available space
+    flexGrow: 1,
     paddingBottom: height * 0.1,
     marginHorizontal: width * 0.04,
+  },
+  noTaskContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: height * 0.3, // Ensure minimum height for visibility
+  },
+  noTaskText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#6C757D',
+    marginTop: 15,
+  },
+  noTaskSubText: {
+    fontSize: 14,
+    color: '#ADB5BD',
+    marginTop: 5,
   },
 });
 

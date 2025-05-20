@@ -42,7 +42,9 @@ const AuthScreen = () => {
     const [isNetworkError, setIsNetworkError] = useState(false);
     const [userName, setUserName] = useState('');
     const [showBiomatricOption, setShowBiomatricOption] = useState(false);
-    const [showPinInput, setShowPinInput] = useState(!showBiomatricOption);
+    const [showPinInput, setShowPinInput] = useState(false);
+    const [showmodal, setShowModal] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
     const [showFingerprint, setShowFingerprint] = useState(false);
     const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
 
@@ -56,27 +58,33 @@ const AuthScreen = () => {
             if (name) setUserName(name);
         };
         loadUserName();
-
-        const getBioMatricS = async () => {
-            const bioStatus = await AsyncStorage.getItem('useFingerprint');
-            setShowBiomatricOption(bioStatus === 'true');
-            setShowPinInput(bioStatus !== 'true');
-        };
-        getBioMatricS();
         
-        NetInfo.fetch().then(netInfo => {
-            if (netInfo.isConnected) {
-                // Silent network check on load
+    }, []);
+
+     useEffect(() => {
+        const checkBiometricOnLoad = async () => {
+            const biometricEnabled = await AsyncStorage.getItem("userBiometric");
+            const netInfo = await NetInfo.fetch();
+            if (netInfo.isConnected && biometricEnabled) {
+                handleBiometricAuthentication();
             }
-        });
+        };
+        checkBiometricOnLoad();
     }, []);
 
     const checkNetworkAndAuthenticate = async () => {
+           const biometricEnabled = await AsyncStorage.getItem("userBiometric");
+        if (!biometricEnabled) {
+            setShowModal(true)
+            return;
+        }
+
         const netInfo = await NetInfo.fetch();
         if (!netInfo.isConnected) {
             setIsNetworkError(true);
             return;
         }
+
         handleBiometricAuthentication();
     };
 
@@ -149,85 +157,58 @@ const AuthScreen = () => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <StatusBar backgroundColor="#a970ff" barStyle="light-content" />
-            
-            {/* Bank Logo Area */}
+            <StatusBar barStyle="light-content" backgroundColor="#4A6FA5" />
             <LinearGradient
-                colors={['#a970ff', '#8a5bda']}
+                colors={['#4A6FA5', '#6B8CBE']}
                 style={styles.header}
             >
                 <View style={styles.logoContainer}>
                     {Logos ? (
-                    <Image source={Logos} style={styles.logo} />
+                        <Image source={Logos} style={styles.logo} />
                     ) : (
-                    <View style={styles.companyPlaceholder}>
-                        <MaterialIcons name="business" size={scaleWidth(40)} color="#fff" />
-                    </View>
+                        <View style={styles.companyPlaceholder}>
+                            <MaterialIcons name="business" size={scaleWidth(40)} color="#fff" />
+                        </View>
                     )}
                 </View>
-                <Text style={styles.welcomeText}>Welcome to ATOMWALK HRM</Text>
-                {userName && (
-                    <View style={styles.userInfoContainer}>
-                        <Icon name="person-circle-outline" size={24} color="#fff" />
-                        <Text style={styles.userName}>{userName}</Text>
-                    </View>
-                )}
+                <Text style={styles.welcomeText}>Welcome to ATOMWALK CRM</Text>
             </LinearGradient>
 
-            <Loader visible={isLoading} />
-            
+            <Loader visible={isLoading} message={"Please Wait..."} />
+
             <View style={styles.contentContainer}>
                 {!showPinInput && !showFingerprint ? (
                     <View style={styles.card}>
                         <Text style={styles.loginOptionsText}>Login Options</Text>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={styles.authButton}
                             onPress={() => setShowPinInput(true)}
                         >
                             <View style={styles.authButtonIconContainer}>
-                                <Icon name="lock-closed-outline" size={22} color="#7722F9" />
+                                <Icon name="lock-closed-outline" size={22} color="#4A6FA5" />
                             </View>
                             <Text style={styles.authButtonText}>Login with PIN</Text>
                             <Icon name="chevron-forward-outline" size={20} color="#777" style={styles.authButtonArrow} />
                         </TouchableOpacity>
-                        
-                        {showBiomatricOption && (
-                            <TouchableOpacity 
-                                style={styles.authButton}
-                                onPress={() => {
-                                    setShowFingerprint(true);
-                                    checkNetworkAndAuthenticate();
-                                }}
-                            >
-                                <View style={styles.authButtonIconContainer}>
-                                    <Icon name="finger-print-outline" size={22} color="#7722F9" />
-                                </View>
-                                <Text style={styles.authButtonText}>Login with Fingerprint</Text>
-                                <Icon name="chevron-forward-outline" size={20} color="#777" style={styles.authButtonArrow} />
-                            </TouchableOpacity>
-                        )}
+
+                        <TouchableOpacity
+                            style={styles.authButton}
+                            onPress={() => {
+                                setShowFingerprint(true);
+                                checkNetworkAndAuthenticate();
+                            }}
+                        >
+                            <View style={styles.authButtonIconContainer}>
+                                <Icon name="finger-print-outline" size={22} color="#4A6FA5" />
+                            </View>
+                            <Text style={styles.authButtonText}>Login with Fingerprint</Text>
+                            <Icon name="chevron-forward-outline" size={20} color="#777" style={styles.authButtonArrow} />
+                        </TouchableOpacity>
                     </View>
                 ) : showPinInput ? (
                     <View style={styles.card}>
-                        <Text style={styles.title}>Enter your 4-digit PIN</Text>
-                        {/* <View style={styles.mPINContainer}>
-                            {mPIN.map((value, index) => (
-                                <TextInput
-                                    key={index}
-                                    ref={inputRefs[index]}
-                                    style={[
-                                        styles.mPINInput,
-                                        value ? styles.mPINInputFilled : {}
-                                    ]}
-                                    maxLength={1}
-                                    keyboardType="number-pad"
-                                    secureTextEntry={true}
-                                    value={value}
-                                    onChangeText={(text) => handleMPINChange(text, index)}
-                                />
-                            ))}
-                        </View> */}
-                         <TextInput
+                        <Text style={styles.title}>Enter your PIN</Text>
+                        <TextInput
                                 style={[styles.input, { height: 50, width: '100%', backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 10 }]}
                                 placeholder="Enter your PIN"
                                 secureTextEntry
@@ -237,105 +218,83 @@ const AuthScreen = () => {
                                 onChangeText={handleMPINChange}
                                 placeholderTextColor="#888" // Ensure placeholder text is visible
                             />
-                        {/* {attemptsRemaining < maxAttempts && (
+                        {attemptsRemaining < maxAttempts && (
                             <View style={styles.errorContainer}>
                                 <Icon name="alert-circle-outline" size={16} color="#E02020" />
                                 <Text style={styles.errorText}>
                                     Incorrect PIN. {attemptsRemaining} attempts remaining.
                                 </Text>
                             </View>
-                        )} */}
-                        {attemptsRemaining < maxAttempts && (
-                            <View style={styles.errorContainer}>
-                                <Icon name="alert-circle-outline" size={16} color="#E02020" />
-                                <Text style={styles.errorText}>
-                                    Incorrect PIN. Please Try Again.
-                                </Text>
-                            </View>
                         )}
-
-                        
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={[
                                 styles.submitButton,
-                                value.length < 4  && {
+                                value.length < 4 && {
                                     backgroundColor: '#fff',
-                                    borderColor: 'rgb(207, 214, 221)',
+                                    borderColor: '#4d88ff',
                                     borderWidth: 1,
                                     shadowColor: 'transparent',
                                     elevation: 0,
                                 }
                             ]}
                             onPress={handleMPINSubmit}
-                            disabled={ value.length < 4 }
+                            disabled={value.length < 4}
                         >
                             <Text style={[
                                 styles.submitButtonText,
-                                 value.length < 4 && { color: '#666' }
+                                value.length < 4 && { color: '#666' }
                             ]}>
                                 LOGIN
                             </Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity 
-                            onPress={() => setIsLogoutModalVisible(true)}
-                            style={styles.forgotContainer}
-                        // onPress={openPopup}
+                        {errorMessage ? (
+                                        <Animated.View style={[styles.errorContainer, { transform: [{ translateX: shakeAnim }] }]}>
+                                          <MaterialIcons name="error-outline" size={18} color='#ED1010' />
+                                          <Animated.Text style={styles.errorText}>
+                                            {errorMessage}
+                                          </Animated.Text>
+                                        </Animated.View>
+                                      ) : null}
+
+                        {/* <TouchableOpacity onPress={openPopup} style={styles.forgotContainer}>
+                            <Icon name="help-circle-outline" size={16} color={colors.primary} />
+                            <Text style={styles.forgotText}>Forgot PIN</Text>
+                        </TouchableOpacity> */}
+                        <TouchableOpacity
+                            style={styles.backButton}
+                            onPress={() => setShowPinInput(false)}
                         >
-                            <Icon name="log-out-outline" size={16} color="#9C5EF9" />
-                            <Text style={styles.forgotText}>Logout</Text>
+                            <Icon name="arrow-back-outline" size={16} color="#4A6FA5" style={styles.backIcon} />
+                            <Text style={styles.backButtonText}>Back to Login Options</Text>
                         </TouchableOpacity>
-                        
-                        {showBiomatricOption && (
-                            <TouchableOpacity 
-                                style={styles.backButton}
-                                onPress={() => setShowPinInput(false)}
-                            >
-                                <Icon name="arrow-back-outline" size={16} color="#9C5EF9" style={styles.backIcon} />
-                                <Text style={styles.backButtonText}>Back to Login Options</Text>
-                            </TouchableOpacity>
-                        )}
                     </View>
                 ) : (
                     <View style={styles.card}>
                         <Text style={styles.title}>Fingerprint Authentication</Text>
-                        <TouchableOpacity 
-                            style={styles.fingerprintIconContainer} 
-                            onPress={() => {
-                                checkNetworkAndAuthenticate();
-                            }}
+                        <TouchableOpacity
+                            style={styles.fingerprintIconContainer}
+                            onPress={checkNetworkAndAuthenticate}
                         >
-                            <Icon name="finger-print" size={80} color="#9C5EF9" />
+                            <Icon name="finger-print" size={80} color="#4A6FA5" />
                         </TouchableOpacity>
 
                         <Text style={styles.fingerprintHint}>
                             Place your finger on the sensor to authenticate
                         </Text>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={styles.backButton}
-                            onPress={() => setShowFingerprint(false)}
+                            onPress={() => {
+                                setShowFingerprint(false)
+                                setShowPinInput(true);
+                            }}
                         >
-                            <Icon name="arrow-back-outline" size={16} color="#9C5EF9" style={styles.backIcon} />
+                            <Icon name="arrow-back-outline" size={16} color="#4A6FA5" style={styles.backIcon} />
                             <Text style={styles.backButtonText}>Use PIN instead</Text>
                         </TouchableOpacity>
                     </View>
                 )}
 
-                <View style={styles.securityNote}>
-                    <Icon name="shield-checkmark-outline" size={20} color="#FFA726" style={styles.noteIcon} />
-                    <View style={styles.noteContent}>
-                        <Text style={styles.noteTitle}>Security Notice</Text>
-                        <Text style={styles.noteText}>
-                            <Text style={styles.bulletPoint}>• </Text>
-                            Never share your PIN with anyone
-                            {'\n'}
-                            <Text style={styles.bulletPoint}>• </Text>
-                            If you've updated your PIN using web app, please logout and login again with your new PIN
-                            (Login with PIN - Logout)
-                        </Text>
-                    </View>
-                </View>
-                
                 <View style={styles.footer}>
                     <Text style={styles.footerText}>© 2025 ATOMWALK. All rights reserved.</Text>
                     <Text style={styles.versionText}>Version 1.0.8</Text>
@@ -349,17 +308,10 @@ const AuthScreen = () => {
                 onClose={() => setIsNetworkError(false)}
                 onRetry={checkNetworkAndAuthenticate}
             />
-            <ConfirmationModal
-            visible={isLogoutModalVisible}
-            message="Are you sure you want to logout?"
-            onConfirm={() => {
-              setIsLogoutModalVisible(false);
-              logout();
-            }}
-            onCancel={() => setIsLogoutModalVisible(false)}
-            confirmText="Logout"
-            cancelText="Cancel"
-          />
+            <ErrorModal
+                visible={showmodal}
+                message="Biometric authentication is not enabled. Please enable it in settings."
+                onClose={() => setShowModal(false)}></ErrorModal>
         </SafeAreaView>
     );
 };
@@ -459,7 +411,7 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: '#F6F0FF',
+        backgroundColor: '#B1C0D7',
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 15,
@@ -537,14 +489,14 @@ const styles = StyleSheet.create({
         marginBottom: 15,
     },
     forgotText: {
-        color: '#9C5EF9',
+        color: "#4A6FA5",
         marginLeft: 5,
         fontWeight: '500',
     },
     fingerprintIconContainer: {
         marginVertical: 30,
         padding: 20,
-        backgroundColor: '#F6F0FF',
+        backgroundColor: "#B1C0D7",
         borderRadius: 60,
     },
     fingerprintHint: {
@@ -563,7 +515,7 @@ const styles = StyleSheet.create({
         marginRight: 5,
     },
     backButtonText: {
-        color: '#9C5EF9',
+        color: "#4A6FA5",
         fontSize: 14,
         fontWeight: '500',
     },
@@ -582,7 +534,7 @@ const styles = StyleSheet.create({
         marginTop: 5,
     },
     input: {
-    color: '#9C5EF9',
+    color: '#4A6FA5',
     fontSize: 16,
     padding: 10, // Added padding for better visibility
     letterSpacing: 2, // Adds spacing between characters for PIN input

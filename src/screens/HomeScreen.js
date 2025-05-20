@@ -136,6 +136,7 @@ const HomeScreen = ({ navigation }) => {
       console.log("Filtered Tasks:", formattedTasks);
     } catch (error) {
       console.error("Error fetching tasks:", error);
+      setTasks([]); // Ensure tasks is set to empty array on error
     }
   };
 
@@ -187,18 +188,15 @@ const HomeScreen = ({ navigation }) => {
     setModalVisible(false);
   };
 
-  const renderFilterPill = (label, selected, onPress) => (
+  const renderFilterPill = (label, selected, onPress, key) => (
     <TouchableOpacity
+      key={key}
       onPress={onPress}
-      style={[
-        styles.filterPill,
-        selected && styles.filterPillSelected,
-      ]}
+      style={[styles.filterPill, selected && styles.filterPillSelected]}
     >
-      <Text style={[
-        styles.filterPillText,
-        selected && styles.filterPillTextSelected
-      ]}>
+      <Text
+        style={[styles.filterPillText, selected && styles.filterPillTextSelected]}
+      >
         {label}
       </Text>
     </TouchableOpacity>
@@ -207,17 +205,19 @@ const HomeScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor="#4A6FA5" />
-      
+
       {/* Header with Gradient Background */}
       <LinearGradient
-        colors={['#4A6FA5', '#6B8CBE']}
+        colors={["#4A6FA5", "#6B8CBE"]}
         style={styles.header}
       >
         <View style={styles.headerContent}>
           <View style={styles.userInfo}>
             <Image
               source={{
-                uri: company.image || "https://home.atomwalk.com/static/media/Atom_walk_logo-removebg-preview.21661b59140f92dd7ced.png",
+                uri:
+                  company.image ||
+                  "https://home.atomwalk.com/static/media/Atom_walk_logo-removebg-preview.21661b59140f92dd7ced.png",
               }}
               style={styles.profileImage}
             />
@@ -228,10 +228,6 @@ const HomeScreen = ({ navigation }) => {
               </Text>
             </View>
           </View>
-          
-          <TouchableOpacity style={styles.notificationButton}>
-            <Ionicons name="notifications-outline" size={24} color="white" />
-          </TouchableOpacity>
         </View>
       </LinearGradient>
 
@@ -245,13 +241,13 @@ const HomeScreen = ({ navigation }) => {
           </View>
           <View style={styles.summaryCard}>
             <Text style={styles.summaryNumber}>
-              {tasks.filter(t => t.status === "Completed").length}
+              {tasks.filter((t) => t.status === "Completed").length}
             </Text>
             <Text style={styles.summaryLabel}>Completed</Text>
           </View>
           <View style={styles.summaryCard}>
             <Text style={styles.summaryNumber}>
-              {tasks.filter(t => t.status === "Planned").length}
+              {tasks.filter((t) => t.status === "Planned").length}
             </Text>
             <Text style={styles.summaryLabel}>Pending</Text>
           </View>
@@ -261,24 +257,26 @@ const HomeScreen = ({ navigation }) => {
         <View style={styles.filterSection}>
           <Text style={styles.sectionTitle}>Date Filter</Text>
           <View style={styles.filterRow}>
-            {dayFilterOptions.map(option => (
+            {dayFilterOptions.map((option) =>
               renderFilterPill(
                 option,
                 selectedDayFilter === option,
-                () => setSelectedDayFilter(option)
+                () => setSelectedDayFilter(option),
+                option
               )
-            ))}
+            )}
           </View>
-          
+
           <Text style={[styles.sectionTitle, { marginTop: 15 }]}>Status Filter</Text>
           <View style={styles.filterRow}>
-            {statusFilterOptions.map(option => (
+            {statusFilterOptions.map((option) =>
               renderFilterPill(
                 option,
                 selectedStatusFilter === option,
-                () => setSelectedStatusFilter(option)
+                () => setSelectedStatusFilter(option),
+                option
               )
-            ))}
+            )}
           </View>
         </View>
 
@@ -338,38 +336,38 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   headerContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   userInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   profileImage: {
     width: width * 0.12,
     height: width * 0.12,
     borderRadius: width * 0.06,
     borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.3)',
+    borderColor: "rgba(255,255,255,0.3)",
   },
   userTextContainer: {
     marginLeft: width * 0.04,
   },
   welcomeText: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
+    color: "rgba(255,255,255,0.8)",
   },
   companyName: {
     fontSize: 18,
-    color: '#FFFFFF',
-    fontWeight: '600',
+    color: "#FFFFFF",
+    fontWeight: "600",
     marginTop: 4,
   },
   notificationButton: {
     padding: 8,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: "rgba(255,255,255,0.2)",
   },
   contentContainer: {
     flex: 1,
@@ -377,17 +375,17 @@ const styles = StyleSheet.create({
     paddingTop: 20,
   },
   summaryContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 20,
   },
   summaryCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 12,
     padding: 15,
     width: width * 0.28,
-    alignItems: 'center',
-    shadowColor: '#000',
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -395,20 +393,20 @@ const styles = StyleSheet.create({
   },
   summaryNumber: {
     fontSize: 24,
-    fontWeight: '700',
-    color: '#4A6FA5',
+    fontWeight: "700",
+    color: "#4A6FA5",
     marginBottom: 5,
   },
   summaryLabel: {
     fontSize: 12,
-    color: '#6C757D',
+    color: "#6C757D",
   },
   filterSection: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 12,
     padding: 15,
     marginBottom: 20,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -416,69 +414,69 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#343A40',
+    fontWeight: "600",
+    color: "#343A40",
     marginBottom: 10,
   },
   filterRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     marginBottom: -8,
   },
   filterPill: {
     paddingHorizontal: 15,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: "#F1F5F9",
     marginRight: 8,
     marginBottom: 8,
   },
   filterPillSelected: {
-    backgroundColor: '#4A6FA5',
+    backgroundColor: "#4A6FA5",
   },
   filterPillText: {
     fontSize: 14,
-    color: '#6C757D',
+    color: "#6C757D",
   },
   filterPillTextSelected: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   taskListHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 15,
   },
   taskListTitle: {
     fontSize: 20,
-    fontWeight: '600',
-    color: '#343A40',
+    fontWeight: "600",
+    color: "#343A40",
   },
   taskCount: {
     fontSize: 14,
-    color: '#6C757D',
+    color: "#6C757D",
   },
   taskListContainer: {
-    // flex: 1,
+    flex: 1, // Ensure container takes up remaining space
   },
   listContent: {
     paddingBottom: height * 0.1,
   },
   noTaskContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingBottom: height * 0.2,
+    justifyContent: "center",
+    alignItems: "center",
+    minHeight: height * 0.3, // Ensure minimum height for visibility
   },
   noTaskText: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#6C757D',
+    fontWeight: "600",
+    color: "#6C757D",
     marginTop: 15,
   },
   noTaskSubText: {
     fontSize: 14,
-    color: '#ADB5BD',
+    color: "#ADB5BD",
     marginTop: 5,
   },
 });
