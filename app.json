@@ -1,8 +1,8 @@
 {
   "expo": {
     "name": "Facility Management App",
-    "slug": "facility-app",
-    "version": "1.0.8",
+    "slug": "atomwalkfms",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/adaptive-icons.png",
     "scheme": "myapp",
@@ -25,7 +25,7 @@
         "foregroundImage": "./assets/images/adaptive-icons.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.pritamkumarnayak01.hrapp"
+      "package": "com.atomwalk.atomwalkfms"
     },
     "web": {
       "bundler": "metro",
@@ -44,6 +44,6 @@
         "projectId": "e3f7dc00-8ecc-4682-abad-dff93c4575e7"
       }
     },
-    "owner": "pritamkumarnayak01"
+    "owner": "atomwalk"
   }
 }
