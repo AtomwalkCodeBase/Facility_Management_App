@@ -297,7 +297,7 @@ const AuthScreen = () => {
 
                 <View style={styles.footer}>
                     <Text style={styles.footerText}>© 2025 ATOMWALK. All rights reserved.</Text>
-                    <Text style={styles.versionText}>Version 1.0.8</Text>
+                    <Text style={styles.versionText}>Version 1.0.1</Text>
                 </View>
             </View>
 
