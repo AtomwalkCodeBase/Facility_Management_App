@@ -1,36 +1,20 @@
-import React, { useContext, useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  Dimensions,
-  StyleSheet,
-  FlatList,
-  Animated,
-  Alert,
-  Image,
-  SafeAreaView,
-  TouchableOpacity,
-} from "react-native";
+import { useContext, useState, useEffect } from "react";
+import { View, Text, Dimensions, StyleSheet, FlatList, Animated, Alert, Image, TouchableOpacity, Modal } from "react-native";
 import { useRoute } from "@react-navigation/native";
 import { AppContext } from "../../context/AppContext";
 import { getCompanyInfo, getProfileInfo } from "../services/authServices";
 import { StatusBar } from "expo-status-bar";
-import {
-  getActivityList,
-  getUserTasks,
-  updateTask,
-} from "../services/productServices";
+import { getActivityList, getUserTasks, updateTask } from "../services/productServices";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import ModalComponent from "../components/ModalComponent";
-import Dropdown from "../components/Dropdown";
-import NewTaskCard from "../components/NewTaskCard";
+import TaskCard from "../components/NewTaskCard";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import LottieView from "lottie-react-native";
 
 const { width, height } = Dimensions.get("window");
 
-const dayFilterOptions = ["Today", "Next 3 Days", "Past", "All"];
-const statusFilterOptions = ["Planned", "Completed", "Not Planned"];
+const dayFilterOptions = ["All", "Today", "Next 3 Days", "Past"];
+const statusFilterOptions = [ "Planned", "Completed", "Not Planned"];
 
 const HomeScreen = ({ navigation }) => {
   const route = useRoute();
@@ -40,7 +24,6 @@ const HomeScreen = ({ navigation }) => {
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [selectedIndex, setSelectedIndex] = useState(0);
   const [modalVisible, setModalVisible] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
@@ -64,6 +47,10 @@ const HomeScreen = ({ navigation }) => {
     }
   }, [route?.params?.refresh]);
 
+  useEffect(() => {
+    fetchTasks(selectedDayFilter, selectedStatusFilter);
+  }, [selectedDayFilter, selectedStatusFilter]);
+
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -86,32 +73,28 @@ const HomeScreen = ({ navigation }) => {
     setLoading(false);
   };
 
-  useEffect(() => {
-    fetchTasks(selectedDayFilter, selectedStatusFilter);
-  }, [selectedDayFilter, selectedStatusFilter]);
-
   const fetchTasks = async (dayFilter, statusFilter) => {
     let taskType = "ALL";
     if (dayFilter === "Today") taskType = "D0";
     else if (dayFilter === "Next 3 Days") taskType = "D3";
     else if (dayFilter === "Past") taskType = "PAST";
-    else if (dayFilter === "Cancel") taskType = "CANCEL";
+    else if (dayFilter === "All") taskType = "ALL";
 
     try {
       const res = await getUserTasks(taskType, "", "");
-      console.log("Fetched Tasks:", res.data);
+      // console.log("Fetched Tasks:", res.data);
 
-      const formattedTasks = res.data
+      const formattedTasks = (res.data || [])
         .map((task) => ({
           id: task.id.toString(),
           title: task.name || "Untitled Task",
           description: task.remarks || "",
           taskDate: task.task_date || "N/A",
           endDate: task.task_date || "N/A",
-          time: `${task.start_time} - ${task.end_time}` || "",
+          time: task.start_time && task.end_time ? `${task.start_time} - ${task.end_time}` : "",
           startTime: task.start_time || "",
           endTime: task.end_time || "",
-          status: task.task_status || "Pending",
+          status: task.task_status || "Planned",
           priority:
             task.priority === "01"
               ? "High"
@@ -129,18 +112,21 @@ const HomeScreen = ({ navigation }) => {
           originalData: task,
         }))
         .filter(
-          (task) => statusFilter === "ALL" || task.status === statusFilter
+          (task) =>
+            statusFilter === "All" ||
+            task.status.toLowerCase() === statusFilter.toLowerCase()
         );
 
+      // console.log("Filtered Tasks for", statusFilter, ":", formattedTasks);
       setTasks(formattedTasks);
-      console.log("Filtered Tasks:", formattedTasks);
     } catch (error) {
       console.error("Error fetching tasks:", error);
-      setTasks([]); // Ensure tasks is set to empty array on error
+      setTasks([]);
     }
   };
 
   const handleTaskComplete = (task) => {
+    if (task.status.toLowerCase() === "completed") return;
     setSelectedTask(task);
     setModalVisible(true);
   };
@@ -157,21 +143,14 @@ const HomeScreen = ({ navigation }) => {
       const taskData = {
         curr_user: selectedTask?.originalData?.curr_user?.id || "",
         id: selectedTask.originalData.id,
-        name:
-          selectedTask.originalData.name ||
-          selectedTask.title ||
-          "Unnamed Task",
-        remarks:
-          selectedTask.originalData.remarks || selectedTask.description || "",
+        name: selectedTask.originalData.name || selectedTask.title || "Unnamed Task",
+        remarks: selectedTask.originalData.remarks || selectedTask.description || "",
         start_time: selectedTask.originalData.start_time || null,
         task_date:
           selectedTask.originalData.task_date ||
           selectedTask.taskDate ||
           new Date().toLocaleDateString("en-GB"),
-        task_type:
-          selectedTask.originalData.task_type ||
-          selectedTask.taskType ||
-          "GENERAL",
+        task_type: selectedTask.originalData.task_type || selectedTask.taskType || "GENERAL",
       };
 
       await updateTask(taskData, "Y", "N");
@@ -194,23 +173,18 @@ const HomeScreen = ({ navigation }) => {
       onPress={onPress}
       style={[styles.filterPill, selected && styles.filterPillSelected]}
     >
-      <Text
-        style={[styles.filterPillText, selected && styles.filterPillTextSelected]}
-      >
+      <Text style={[styles.filterPillText, selected && styles.filterPillTextSelected]}>
         {label}
       </Text>
     </TouchableOpacity>
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <GestureHandlerRootView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor="#4A6FA5" />
 
       {/* Header with Gradient Background */}
-      <LinearGradient
-        colors={["#4A6FA5", "#6B8CBE"]}
-        style={styles.header}
-      >
+      <LinearGradient colors={["#4A6FA5", "#6B8CBE"]} style={styles.header}>
         <View style={styles.headerContent}>
           <View style={styles.userInfo}>
             <Image
@@ -229,55 +203,53 @@ const HomeScreen = ({ navigation }) => {
             </View>
           </View>
         </View>
-      </LinearGradient>
 
-      {/* Main Content */}
-      <View style={styles.contentContainer}>
-        {/* Task Summary Cards */}
-        <View style={styles.summaryContainer}>
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryNumber}>{tasks.length}</Text>
-            <Text style={styles.summaryLabel}>Total Tasks</Text>
+        {/* Statistics */}
+        <View style={styles.statsContainer}>
+          <View style={styles.statItem}>
+            <Text style={styles.statNumber}>{tasks.length}</Text>
+            <Text style={styles.statLabel}>Total Tasks</Text>
           </View>
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryNumber}>
-              {tasks.filter((t) => t.status === "Completed").length}
+          <View style={styles.statItem}>
+            <Text style={[styles.statNumber, styles.completedStat]}>
+              {tasks.filter((t) => t.status.toLowerCase() === "completed").length}
             </Text>
-            <Text style={styles.summaryLabel}>Completed</Text>
+            <Text style={styles.statLabel}>Completed</Text>
           </View>
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryNumber}>
-              {tasks.filter((t) => t.status === "Planned").length}
+          <View style={styles.statItem}>
+            <Text style={[styles.statNumber, styles.pendingStat]}>
+              {tasks.filter((t) => t.status.toLowerCase() === "planned").length}
             </Text>
-            <Text style={styles.summaryLabel}>Pending</Text>
+            <Text style={styles.statLabel}>Pending</Text>
           </View>
         </View>
+      </LinearGradient>
 
-        {/* Filter Section */}
-        <View style={styles.filterSection}>
-          <Text style={styles.sectionTitle}>Date Filter</Text>
-          <View style={styles.filterRow}>
-            {dayFilterOptions.map((option) =>
-              renderFilterPill(
-                option,
-                selectedDayFilter === option,
-                () => setSelectedDayFilter(option),
-                option
-              )
-            )}
-          </View>
+      <View style={styles.contentContainer}>
+        {/* Date Filters */}
+        <Text style={styles.sectionTitle}>Date Filter</Text>
+        <View style={styles.filterRow}>
+          {dayFilterOptions.map((option) =>
+            renderFilterPill(
+              option,
+              selectedDayFilter === option,
+              () => setSelectedDayFilter(option),
+              option
+            )
+          )}
+        </View>
 
-          <Text style={[styles.sectionTitle, { marginTop: 15 }]}>Status Filter</Text>
-          <View style={styles.filterRow}>
-            {statusFilterOptions.map((option) =>
-              renderFilterPill(
-                option,
-                selectedStatusFilter === option,
-                () => setSelectedStatusFilter(option),
-                option
-              )
-            )}
-          </View>
+        {/* Status Filters */}
+        <Text style={[styles.sectionTitle, { marginTop: 15 }]}>Status Filter</Text>
+        <View style={styles.filterRow}>
+          {statusFilterOptions.map((option) =>
+            renderFilterPill(
+              option,
+              selectedStatusFilter === option,
+              () => setSelectedStatusFilter(option),
+              option
+            )
+          )}
         </View>
 
         {/* Task List */}
@@ -286,35 +258,61 @@ const HomeScreen = ({ navigation }) => {
           <Text style={styles.taskCount}>{tasks.length} tasks</Text>
         </View>
 
-        <GestureHandlerRootView style={styles.taskListContainer}>
-          {tasks.length > 0 ? (
-            <FlatList
-              data={tasks}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <NewTaskCard task={item} onMarkComplete={handleTaskComplete} />
-              )}
-              contentContainerStyle={styles.listContent}
-              showsVerticalScrollIndicator={false}
-            />
-          ) : (
-            <View style={styles.noTaskContainer}>
-              <Ionicons name="checkmark-done-circle" size={60} color="#D3D3D3" />
-              <Text style={styles.noTaskText}>No Tasks Available</Text>
-              <Text style={styles.noTaskSubText}>You're all caught up!</Text>
-            </View>
-          )}
-        </GestureHandlerRootView>
+        {/* Task List or Empty State */}
+        {tasks.length > 0 ? (
+          <FlatList
+            data={tasks}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <TaskCard task={item} onMarkComplete={handleTaskComplete} />
+            )}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            style={styles.taskListContainer}
+          />
+        ) : (
+          <View style={styles.noTaskContainer}>
+            <Ionicons name="checkmark-done-circle" size={60} color="#D3D3D3" />
+            <Text style={styles.noTaskText}>No Tasks Available</Text>
+            <Text style={styles.noTaskSubText}>You're all caught up!</Text>
+          </View>
+        )}
       </View>
 
-      <ModalComponent
-        modalVisible={modalVisible}
-        setModalVisible={setModalVisible}
-        confirmCompletion={confirmCompletion}
-        cancelCompletion={cancelCompletion}
-        isUpdating={isUpdating}
-      />
-    </SafeAreaView>
+      {/* Completion Modal */}
+      <Modal visible={modalVisible} transparent animationType="fade">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <LottieView
+              source={require('../../assets/Animation.json')}
+              autoPlay
+              loop={false}
+              style={styles.animation}
+            />
+            <Text style={styles.modalText}>
+              {isUpdating ? "Completing Task..." : "Task Completed!"}
+            </Text>
+            <Text style={styles.taskName}>{selectedTask?.title}</Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={cancelCompletion}
+                disabled={isUpdating}
+              >
+                <Text style={styles.modalButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.confirmButton]}
+                onPress={confirmCompletion}
+                disabled={isUpdating}
+              >
+                <Text style={styles.modalButtonText}>Confirm</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </GestureHandlerRootView>
   );
 };
 
@@ -324,7 +322,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F5F7FA",
   },
   header: {
-    paddingTop: height * 0.05,
+    paddingTop: height * 0.02,
     paddingBottom: height * 0.03,
     paddingHorizontal: width * 0.05,
     borderBottomLeftRadius: 20,
@@ -364,59 +362,44 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginTop: 4,
   },
-  notificationButton: {
-    padding: 8,
-    borderRadius: 20,
+  statsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 20,
+  },
+  statItem: {
     backgroundColor: "rgba(255,255,255,0.2)",
+    borderRadius: 10,
+    padding: 15,
+    width: "30%",
+    alignItems: "center",
+  },
+  statNumber: {
+    color: "#fff",
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 5,
+  },
+  completedStat: {
+    color: "#fff",
+  },
+  pendingStat: {
+    color:"white",
+  },
+  statLabel: {
+    color: "rgba(255,255,255,0.8)",
+    fontSize: 12,
   },
   contentContainer: {
     flex: 1,
-    paddingHorizontal: width * 0.05,
-    paddingTop: 20,
-  },
-  summaryContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 20,
-  },
-  summaryCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 15,
-    width: width * 0.28,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  summaryNumber: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#4A6FA5",
-    marginBottom: 5,
-  },
-  summaryLabel: {
-    fontSize: 12,
-    color: "#6C757D",
-  },
-  filterSection: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    paddingHorizontal: 12,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#343A40",
+    color: "#333333",
     marginBottom: 10,
+    marginTop: 15,
   },
   filterRow: {
     flexDirection: "row",
@@ -436,7 +419,7 @@ const styles = StyleSheet.create({
   },
   filterPillText: {
     fontSize: 14,
-    color: "#6C757D",
+    color: "#333333",
   },
   filterPillTextSelected: {
     color: "#FFFFFF",
@@ -446,27 +429,29 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 15,
+    marginTop: 15,
   },
   taskListTitle: {
     fontSize: 20,
     fontWeight: "600",
-    color: "#343A40",
+    color: "#333333",
   },
   taskCount: {
     fontSize: 14,
     color: "#6C757D",
   },
   taskListContainer: {
-    flex: 1, // Ensure container takes up remaining space
+    flex: 1,
   },
   listContent: {
+    flexGrow: 1,
     paddingBottom: height * 0.1,
   },
   noTaskContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    minHeight: height * 0.3, // Ensure minimum height for visibility
+    minHeight: height * 0.3,
   },
   noTaskText: {
     fontSize: 18,
@@ -478,6 +463,58 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#ADB5BD",
     marginTop: 5,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  modalContent: {
+    width: "80%",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
+    padding: 20,
+    alignItems: "center",
+  },
+  animation: {
+    width: 100,
+    height: 100,
+  },
+  modalText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333333",
+    marginVertical: 10,
+  },
+  taskName: {
+    fontSize: 16,
+    color: "#555555",
+    textAlign: "center",
+    marginBottom: 15,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  modalButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    marginHorizontal: 5,
+    alignItems: "center",
+  },
+  cancelButton: {
+    backgroundColor: "#F44336",
+  },
+  confirmButton: {
+    backgroundColor: "#4A6FA5",
+  },
+  modalButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });
 

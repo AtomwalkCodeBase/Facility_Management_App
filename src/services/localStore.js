@@ -13,7 +13,6 @@ export const getData = async () => {
 
 export const checkToken = async () => {
   let token = await AsyncStorage.getItem('userToken');
-  // console.log('Check', token, typeof(token))
   if (token){
       // console.log('Check True')
       return true;

@@ -71,11 +71,11 @@ const ResetPasswordScreen = () => {
       return;
     }
 
-    console.log('Calling setUserPinView with:', {
-      oldPin,
-      newPin,
-      employeeId
-    });
+    // console.log('Calling setUserPinView with:', {
+    //   oldPin,
+    //   newPin,
+    //   employeeId
+    // });
 
     // Make the API call
     const response = await setUserPinView(oldPin, newPin, employeeId);

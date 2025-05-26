@@ -1,29 +1,51 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { AntDesign, Ionicons } from '@expo/vector-icons';
+import { colors } from '../Styles/appStyle';
 
 const NewTaskCard = ({ task, onMarkComplete }) => {
-  // Define priority-based left border colors
-  const getPriorityColor = () => {
-    switch (task.priority) {
-      case 'High':
-        return '#e53935'; // Red
-      case 'Medium':
-        return '#fb8c00'; // Orange
-      case 'Low':
-        return '#43a047'; // Green
-      default:
-        return '#1a73e8'; // Blue
-    }
-  };
+  // Define priority-based colors
+  // const getPriorityColor = () => {
+  //   switch (task.priority) {
+  //     case 'High':
+  //       return bg: '#D9E6F6', // Red
+  //     case 'Medium':
+  //       return '#FF9500'; // Orange
+  //     case 'Low':
+  //       return '#45B7D1'; // Green
+  //     default:
+  //       return '#1a73e8'; // Blue
+  //   }
+  // };
+
+   const getPriorityColor = () => {
+     switch (task.priority) {
+       case "High":
+         return { bg: "#D9E6F6", color: "#3B4A75" }; // Red
+       case "Medium":
+         return {
+           bg: "#DFF6E4",
+           color: "#2F5D3B",
+         }; // Orange
+       case "Low":
+         return {
+           bg: "#FDE8DC",
+           color: "#7A4E35",
+         }; // Green
+       default:
+         return { bg: "#E9E4F0", color: "#4A4370" }; // Blue
+     }
+   };
 
   // Define status-based styling
   const getStatusStyle = () => {
     switch (task.status) {
       case 'Completed':
         return {
-          bg: '#e8f5e9',
-          color: '#43a047',
+          // bg: '#e8f5e9',
+          bg: '#27AE60',
+          // color: '#43a047',
+          color: '#fff',
           icon: 'checkmark-circle'
         };
       case 'In Progress':
@@ -40,169 +62,210 @@ const NewTaskCard = ({ task, onMarkComplete }) => {
         };
       default:
         return {
-          bg: '#e0f7fa',
-          color: '#00acc1',
+          // bg: '#e0f7fa',
+          bg: '#F39C12',
+          color: '#fff',
+          // color: '#00acc1',
           icon: 'hourglass'
         };
     }
   };
 
   const statusStyle = getStatusStyle();
+  const priorityColor = getPriorityColor();
 
   const handlePress = () => {
-    onMarkComplete(task); // Pass the task to HomePage to trigger the modal
+    onMarkComplete(task); // Pass the task to Homepage to trigger the modal
   };
 
   return (
-    <Animated.View style={[styles.card, { borderLeftColor: getPriorityColor() }]}>
-      <View style={styles.cardHeader}>
-        <View style={styles.titleContainer}>
-          <Text style={styles.title} numberOfLines={1}>{task.title}</Text>
-        </View>
+    <Animated.View style={[styles.card, { backgroundColor: priorityColor.bg }]}>
+      {/* Top Section - Title */}
+      <View style={styles.titleSection}>
+        <Text style={[styles.title, {color: priorityColor.color}]} numberOfLines={3}>{task.title}</Text>
+      
+
+      {/* Status Badge */}
+      <View style={styles.statusContainer}>
         <View style={[styles.statusBadge, { backgroundColor: statusStyle.bg }]}>
-          <Ionicons name={statusStyle.icon} size={12} color={statusStyle.color} style={styles.statusIcon} />
-          <Text style={[styles.statusText, { color: statusStyle.color }]}>{task.status}</Text>
+          <Ionicons name={statusStyle.icon} size={14} color="rgba(255,255,255,0.9)" />
+          <Text style={[styles.statusText, { color: statusStyle.color }]}>
+            {task.status}
+          </Text>
         </View>
       </View>
 
-      <View style={styles.divider} />
+      </View>
 
-      <View style={styles.cardDetails}>
-        {task.description ? (
-          <Text style={styles.description} numberOfLines={2}>{task.description}</Text>
-        ) : null}
-        
-        <View style={styles.metaContainer}>
-          <View style={styles.metaRow}>
-            <View style={styles.metaItem}>
-              <Ionicons name="calendar-outline" size={14} color="#666" />
-              <Text style={styles.metaText}>{task.taskDate}</Text>
-            </View>
-            
-            {task.time ? (
-              <View style={styles.metaItem}>
-                <Ionicons name="time-outline" size={14} color="#666" />
-                <Text style={styles.metaText}>{task.time}</Text>
-              </View>
-            ) : null}
+      {/* Description */}
+      {task.description ? (
+        <View style={styles.descriptionSection}>
+          <Text style={[styles.description, {color: priorityColor.color}]}>{task.description}</Text>
+        </View>
+      ) : null}
+
+      {/* Task Details */}
+      <View style={styles.detailsSection}>
+        {/* Date */}
+       {(task.taskDate || task.originalData?.start_time || task.originalData?.end_time) ? (
+  <View style={styles.dateTimeRow}>
+    {/* Date */}
+    <View style={styles.inlineRow}>
+      {/* <Ionicons name="calendar-outline" size={16} color="rgba(255,255,255,0.9)" /> */}
+      <Ionicons name="calendar-outline" size={16} color={priorityColor.color}/>
+      <Text style={[styles.inlineText, {color: priorityColor.color}]}>{task.taskDate}</Text>
+    </View>
+
+    {/* Time */}
+    {(task.originalData?.start_time || task.originalData?.end_time) && (
+      <View style={styles.inlineRow}>
+        {/* <Ionicons name="time-outline" size={16} color="rgba(255,255,255,0.9)" /> */}
+        <Ionicons name="time-outline" size={16} color={priorityColor.color} />
+        <Text style={[styles.inlineText, {color: priorityColor.color}]}>
+          {`${task.originalData?.start_time || ''}${task.originalData?.end_time ? ' - ' + task.originalData.end_time : ''}`}
+        </Text>
+      </View>
+    )}
+  </View>
+) : null}
+
+        {/* Customer */}
+        {task.customer && task.customer !== 'No Customer' ? (
+          <View style={styles.detailRow}>
+             <Ionicons name="person-outline" size={16} color={priorityColor.color} />
+            <Text style={[styles.detailValue, {color: priorityColor.color}]}>{task.customer}</Text>
           </View>
-
-          {task.customer && task.customer !== 'No Customer' ? (
-            <View style={styles.metaRow}>
-              <View style={styles.metaItem}>
-                <Ionicons name="business-outline" size={14} color="#666" />
-                <Text style={styles.metaText} numberOfLines={1}>{task.customer}</Text>
-              </View>
-            </View>
-          ) : null}
-        </View>
+        ) : null}
       </View>
 
+      {/* Complete Button */}
       {task.status !== 'Completed' && (
-        <TouchableOpacity 
-          style={styles.completeButton} 
-          onPress={handlePress}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="checkmark-circle" size={16} color="#fff" />
-          <Text style={styles.completeButtonText}>Complete</Text>
-        </TouchableOpacity>
+        <View style={styles.buttonSection}>
+          <TouchableOpacity 
+            style={styles.completeButton} 
+            onPress={handlePress}
+            activeOpacity={0.7}
+          >
+            <AntDesign name="checkcircleo" size={24} color="black" />
+            <Text style={styles.buttonText}> MARK AS DONE</Text>
+          </TouchableOpacity>
+        </View>
       )}
     </Animated.View>
   );
 };
 
+
+export default NewTaskCard;
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
     marginVertical: 8,
+    marginHorizontal: 4,
+    borderRadius: 12,
+    padding: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    elevation: 2,
-    overflow: 'hidden',
-    borderLeftWidth: 4,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 10,
-  },
-  titleContainer: {
-    flex: 1,
-    paddingRight: 8,
+  titleSection: {
+    // marginBottom: 12,
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   title: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    lineHeight: 26,
+    maxWidth: 200
   },
-  divider: {
-    height: 1,
-    backgroundColor: '#f0f0f0',
-    marginHorizontal: 16,
-  },
-  cardDetails: {
-    padding: 16,
-    paddingTop: 12,
-  },
-  description: {
-    fontSize: 14,
-    color: '#666',
+  statusContainer: {
+    alignItems: 'flex-start',
     marginBottom: 12,
-    lineHeight: 20,
-  },
-  metaContainer: {
-    gap: 8,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  metaItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 16,
-    marginBottom: 4,
-  },
-  metaText: {
-    color: '#666',
-    marginLeft: 4,
-    fontSize: 13,
   },
   statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  statusIcon: {
-    marginRight: 4,
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 2,
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
   },
   statusText: {
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+  },
+  descriptionSection: {
+    marginBottom: 8,
+    padding: 10,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 8,
+  },
+  description: {
+    fontSize: 16,
+    color: '#ffffff',
+    lineHeight: 22,
+  },
+  detailsSection: {
+    marginBottom: 16,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    padding: 10,
+    borderRadius: 6,
+  },
+  detailLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    minWidth: 80,
+  },
+  detailValue: {
+    fontSize: 16,
+    color: '#ffffff',
+    flex: 1,
+    marginLeft: 8,
+  },
+  buttonSection: {
+    marginTop: 8,
   },
   completeButton: {
-    backgroundColor: '#1a73e8',
-    padding: 12,
-    borderRadius: 0,
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     alignItems: 'center',
+    backgroundColor: '#ffffff',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 8,
   },
-  completeButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
-    marginLeft: 6,
+  buttonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333333',
+    letterSpacing: 1,
   },
+  dateTimeRow: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  marginBottom: 8,
+  backgroundColor: 'rgba(255,255,255,0.1)',
+  padding: 10,
+  borderRadius: 6,
+},
+inlineRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+},
+inlineText: {
+  fontSize: 16,
+  color: '#ffffff',
+  marginLeft: 8,
+},
 });
-
-export default NewTaskCard;

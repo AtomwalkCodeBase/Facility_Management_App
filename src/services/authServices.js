@@ -1,6 +1,6 @@
 import { authAxios, authAxiosGET } from "./HttpMethod";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { profileInfoURL, companyInfoURL, profileDtlURL, getDbList } from "./ConstantServies";
+import { companyInfoURL, profileDtlURL, getDbList } from "./ConstantServies";
 
 // Corrected: moved AsyncStorage call inside the function
 export async function getProfileInfo() {

@@ -13,7 +13,8 @@ import {
     Dimensions,
     StatusBar,
     Image,
-    SafeAreaView
+    SafeAreaView,
+    Animated
 } from 'react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
 import Logos from '../../assets/images/Atom_walk_logo.jpg'
@@ -23,7 +24,7 @@ import { AppContext } from '../../context/AppContext';
 import Loader from '../../src/components/old_components/Loader';
 import ErrorModal from '../../src/components/ErrorModal';
 import { LinearGradient } from 'expo-linear-gradient';
-import ConfirmationModal from '../../src/components/ConfirmationModal';
+import { MaterialIcons } from '@expo/vector-icons';
 
 const { width, height } = Dimensions.get('window');
 
@@ -34,7 +35,6 @@ const AuthScreen = () => {
     
     const { logout } = useContext(AppContext);
     const { login, setIsLoading, isLoading } = useContext(AppContext);
-    const router = useRouter();
     const [value, setValue] = useState('');
     const [attemptsRemaining, setAttemptsRemaining] = useState(5);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -46,11 +46,20 @@ const AuthScreen = () => {
     const [showmodal, setShowModal] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [showFingerprint, setShowFingerprint] = useState(false);
-    const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
 
-    const openPopup = () => setModalVisible(true);
+    const shakeAnim = new Animated.Value(0);
+
+    // const openPopup = () => setModalVisible(true);
     const maxAttempts = 5;
-    // const inputRefs = Array(4).fill().map(() => useRef(null));
+
+    const triggerShake = () => {
+        Animated.sequence([
+          Animated.timing(shakeAnim, { toValue: 10, duration: 50, useNativeDriver: true }),
+          Animated.timing(shakeAnim, { toValue: -10, duration: 50, useNativeDriver: true }),
+          Animated.timing(shakeAnim, { toValue: 10, duration: 50, useNativeDriver: true }),
+          Animated.timing(shakeAnim, { toValue: 0, duration: 50, useNativeDriver: true }),
+        ]).start();
+      };
 
     useEffect(() => {
         const loadUserName = async () => {
@@ -89,12 +98,6 @@ const AuthScreen = () => {
     };
 
     const handleMPINChange = (text, index) => {
-        // const updatedMPIN = [...mPIN];
-        // updatedMPIN[index] = text;
-        // setMPIN(updatedMPIN);
-
-        // if (text && index < 3) inputRefs[index + 1].current.focus();
-        // if (!text && index > 0) inputRefs[index - 1].current.focus();
         setValue(text);
     };
 
@@ -108,21 +111,7 @@ const AuthScreen = () => {
         const correctMPIN = await AsyncStorage.getItem('userPin');
         const finalUsername = await AsyncStorage.getItem('empId');
         const userPassword = await AsyncStorage.getItem('userPin');
-    
-        // setTimeout(() => {
-        //     if (mPIN.join('') === correctMPIN) {
-        //         setIsAuthenticated(true);
-        //         login(finalUsername, userPassword);
-        //     } else {
-        //         const remaining = attemptsRemaining - 1;
-        //         setAttemptsRemaining(remaining);
-        //          if (remaining > 0) {
-        //              Alert.alert('Incorrect PIN', `${remaining} attempts remaining`);
-        //          } else {
-        //              Alert.alert('Account Locked', 'Too many incorrect attempts.');
-        //          }
-        //     }
-        // }, 1000);
+
          if (value === correctMPIN) {
             setIsAuthenticated(true);
             login(finalUsername, userPassword);
@@ -185,7 +174,7 @@ const AuthScreen = () => {
                             onPress={() => setShowPinInput(true)}
                         >
                             <View style={styles.authButtonIconContainer}>
-                                <Icon name="lock-closed-outline" size={22} color="#4A6FA5" />
+                                <Icon name="lock-closed-outline" size={22} color="#fff" />
                             </View>
                             <Text style={styles.authButtonText}>Login with PIN</Text>
                             <Icon name="chevron-forward-outline" size={20} color="#777" style={styles.authButtonArrow} />
@@ -199,7 +188,7 @@ const AuthScreen = () => {
                             }}
                         >
                             <View style={styles.authButtonIconContainer}>
-                                <Icon name="finger-print-outline" size={22} color="#4A6FA5" />
+                                <Icon name="finger-print-outline" size={22} color="#fff" />
                             </View>
                             <Text style={styles.authButtonText}>Login with Fingerprint</Text>
                             <Icon name="chevron-forward-outline" size={20} color="#777" style={styles.authButtonArrow} />

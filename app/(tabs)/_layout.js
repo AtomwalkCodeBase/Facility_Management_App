@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Tabs } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -40,23 +40,6 @@ const _layout = () => {
         }}
       />
 
-      {/* <Tabs.Screen
-        name="newHome"
-        options={{
-          title: 'Home',
-          headerShown: false,
-          tabBarIcon: ({ color }) => <FontAwesome name="home" size={24} color={color} />,
-        }}
-      /> */}
-
-      {/* <Tabs.Screen
-        name="activity"
-        options={{
-          title: 'Activity',
-          headerShown: false,
-          tabBarIcon: ({ color }) => <FontAwesome name="industry" size={24} color={color} />,
-        }}
-      /> */}
        <Tabs.Screen
         name="task"
         options={{

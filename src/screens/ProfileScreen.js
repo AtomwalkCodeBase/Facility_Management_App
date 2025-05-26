@@ -32,6 +32,8 @@ const ProfileScreen = () => {
       try {
         const res = await getProfileInfo();
         setProfile(res?.data[0]);
+        await AsyncStorage.setItem('profilename', res?.data[0].name);
+        
       } catch (error) {
         console.error('Failed to fetch profile:', error);
       } finally {
@@ -100,7 +102,7 @@ const ProfileScreen = () => {
     return require('../../assets/images/default-profile.jpg'); // Make sure you have this asset
   };
 
-  console.log("Profile==",profile)
+  // console.log("Profile==",profile)
 
   return (
     <>
@@ -137,12 +139,12 @@ const ProfileScreen = () => {
             <InfoRow 
               icon="badge" 
               label="Employee ID" 
-              value={profile?.emp_id || 'EMP-007'} 
+              value={profile?.emp_id} 
             />
             <InfoRow 
               icon="business" 
               label="Department" 
-              value={profile?.department_name || 'BLR OFFICE'} 
+              value={profile?.department_name} 
             />
             <InfoRow 
               icon="date-range" 
@@ -159,12 +161,14 @@ const ProfileScreen = () => {
             <InfoRow 
               icon="mail" 
               label="Email" 
-              value={profile?.email_id || 'souvagyaranjandash8@gmail.com'} 
+              // value={profile?.email_id || 'souvagyaranjandash8@gmail.com'} 
+              value={profile?.email_id} 
             />
             <InfoRow 
               icon="phone" 
               label="Mobile" 
-              value={profile?.mobile_number || '7381625406'} 
+              // value={profile?.mobile_number || '7381625406'} 
+              value={profile?.mobile_number} 
             />
           </View>
 
@@ -174,7 +178,7 @@ const ProfileScreen = () => {
             <InfoRow 
               icon="event-available" 
               label="Available Leaves" 
-              value={profile?.max_no_leave || 17} 
+              value={profile?.max_no_leave} 
             />
           </View>
 
@@ -211,7 +215,7 @@ const ProfileScreen = () => {
             <TouchableOpacity 
               style={[styles.actionButton, styles.secondaryButton]}
               onPress={async () => {
-                await AsyncStorage.removeItem('userPin');
+                // await AsyncStorage.removeItem('userPin');
                 await AsyncStorage.removeItem('authToken');
                 logout();
               }}

@@ -9,7 +9,7 @@
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/splash.png",
-      "resizeMode": "contain",
+      "resizeMode": "cover",
       "backgroundColor": "#ffffff"
     },
     "ios": {
@@ -41,7 +41,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "ad69641b-b7cc-47f7-86a4-3ee437bee76d"
+        "projectId": "e3f7dc00-8ecc-4682-abad-dff93c4575e7"
       }
     },
     "owner": "pritamkumarnayak01"

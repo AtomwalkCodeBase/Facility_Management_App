@@ -1,7 +1,6 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useEffect, useState } from 'react';
 import HomeScreen from '../../src/screens/HomeScreen';
-import PinPopup from '../../src/screens/PinPopup';
 import { getProfileInfo } from '../../src/services/authServices';
 
 const Home = () => {
