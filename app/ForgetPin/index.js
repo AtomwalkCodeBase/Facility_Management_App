@@ -9,10 +9,11 @@ import { useRouter } from 'expo-router';
 import { getDBListInfo } from '../../src/services/authServices';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CompanyDropdown from '../../src/components/ComanyDropDown';
-import Loader from '../../src/components/old_components/Loader';
+// import Loader from '../../src/components/old_components/Loader';
 import Icon from 'react-native-vector-icons/Ionicons'; 
 import { forgetUserPinView } from '../../src/services/productServices';
 import SuccessModal from '../../src/components/SuccessModal';
+import Loader from '../../src/components/Loader';
 
 const { width, height } = Dimensions.get('window');
 

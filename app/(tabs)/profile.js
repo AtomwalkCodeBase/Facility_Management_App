@@ -1,5 +1,4 @@
 import { StyleSheet, Text, View } from 'react-native'
-// import React from 'react'
 import React, { useContext } from 'react'
 import { AppContext } from '../../context/AppContext';
 import ProfileScreen from '../../src/screens/ProfileScreen'

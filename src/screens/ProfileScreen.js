@@ -7,9 +7,9 @@ import { useNavigation, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import QRModal from '../components/QRModal';
 import HeaderComponent from '../components/HeaderComponent';
-import Loader from '../components/old_components/Loader';
 import moment from 'moment';
 import ConfirmationModal from '../components/ConfirmationModal';
+import Loader from '../components/Loader';
 
 const { width } = Dimensions.get('window');
 

@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getActivities, userTaskListURL, empLoginURL, updateTaskURL, forgetEmpPinURL, setUserPinURL } from "../services/ConstantServies";
+import { getActivities, userTaskListURL, empLoginURL, updateTaskURL, setUserPinURL, forgetEmpPinURL } from "../services/ConstantServies";
 import { authAxios, authAxiosPost, publicAxiosRequest } from "./HttpMethod";
 
 export async function getUserTasks(task_type, customer_id, lead_id) {
@@ -21,8 +21,6 @@ export async function getUserTasks(task_type, customer_id, lead_id) {
   if (lead_id) {
     data['lead_id'] = lead_id;
   }
-
-  console.log('getUserTasks', data)
   return authAxios(url, data);
 }
 
@@ -37,7 +35,6 @@ export async function getUserTasks(task_type, customer_id, lead_id) {
     let data = {
       'call_mode': res.call_mode 
     };
-    console.log('callt type==',res.call_mode)
     return authAxios(url,data)
   }
 
@@ -47,7 +44,6 @@ export async function getUserTasks(task_type, customer_id, lead_id) {
     if (res) {
       data['login_data'] = res;
     }
-    console.log('Data to be sent:', data);
     return authAxiosPost(url, data)
   
   }
@@ -75,14 +71,12 @@ export async function setUserPinView(o_pin, n_pin, employeeId) {
       n_pin: n_pin,
       user_type: "EMP",
     };
-
-    console.log("Data to be sent--->",data)
     const url = await setUserPinURL();
     return authAxiosPost(url, data);
   }
 
-  export async function forgetUserPinView(data) {
+export async function forgetUserPinView(data) {
     console.log("Data to be sent--->", data);
     const url = await forgetEmpPinURL();
-    return publicAxiosRequest.post(url, data);
+    return publicAxiosRequest.post(url, data);
 }

@@ -245,7 +245,7 @@ const LoginScreen = () => {
           };
 
       const url = await empLoginURL();
-      console.log("Payload--------", payload);
+      // console.log("Payload--------", payload);
       const response = await publicAxiosRequest.post(url, payload, {
         headers: { "Content-Type": "application/json" },
       });

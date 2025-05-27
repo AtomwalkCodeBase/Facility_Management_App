@@ -21,10 +21,10 @@ import Logos from '../../assets/images/Atom_walk_logo.jpg'
 import Icon from 'react-native-vector-icons/Ionicons'; 
 import PinPassword from '../../src/screens/PinPassword';
 import { AppContext } from '../../context/AppContext';
-import Loader from '../../src/components/old_components/Loader';
 import ErrorModal from '../../src/components/ErrorModal';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
+import Loader from '../../src/components/Loader';
 
 const { width, height } = Dimensions.get('window');
 

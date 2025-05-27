@@ -8,7 +8,7 @@ import { colors } from '../Styles/appStyle';
 import { setUserPinView } from '../services/productServices';
 import HeaderComponent from '../components/HeaderComponent';
 import SuccessModal from '../components/SuccessModal';
-import Loader from '../components/old_components/Loader';
+import Loader from '../components/Loader';
 
 const ResetPasswordScreen = () => {
   const [oldPin, setOldPin] = useState('');
@@ -79,7 +79,7 @@ const ResetPasswordScreen = () => {
 
     // Make the API call
     const response = await setUserPinView(oldPin, newPin, employeeId);
-    console.log('API Response:', response);
+    // console.log('API Response:', response);
 
     if (response && response.status) {
       await AsyncStorage.setItem('userPin', newPin);

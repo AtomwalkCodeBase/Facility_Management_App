@@ -70,7 +70,7 @@ const AppProvider = ({ children }) => {
                     pin: password,
                   };
 
-            console.log("Login Payload---",payload)
+            // console.log("Login Payload---",payload)
             const url = await empLoginURL();
             const response = await publicAxiosRequest.post(url, payload, {
                 headers: { 'Content-Type': 'application/json' },
