@@ -10,6 +10,7 @@ import TaskCard from "../components/NewTaskCard";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import LottieView from "lottie-react-native";
+import Loader from "../components/Loader";
 
 const { width, height } = Dimensions.get("window");
 
@@ -31,6 +32,7 @@ const HomeScreen = ({ navigation }) => {
   const [selectedDayFilter, setSelectedDayFilter] = useState("Today");
   const [selectedStatusFilter, setSelectedStatusFilter] = useState("Planned");
   const [tasks, setTasks] = useState([]);
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     fetchData();
@@ -81,6 +83,7 @@ const HomeScreen = ({ navigation }) => {
     else if (dayFilter === "All") taskType = "ALL";
 
     try {
+      setIsLoading(true)
       const res = await getUserTasks(taskType, "", "");
       // console.log("Fetched Tasks:", res.data);
 
@@ -122,6 +125,8 @@ const HomeScreen = ({ navigation }) => {
     } catch (error) {
       console.error("Error fetching tasks:", error);
       setTasks([]);
+    }finally{
+      setIsLoading(false)
     }
   };
 
@@ -312,6 +317,8 @@ const HomeScreen = ({ navigation }) => {
           </View>
         </View>
       </Modal>
+
+      <Loader visible={isLoading} />
     </GestureHandlerRootView>
   );
 };

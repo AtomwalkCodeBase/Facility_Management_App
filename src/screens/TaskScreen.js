@@ -7,6 +7,7 @@ import NewTaskCard from '../components/NewTaskCard';
 import ModalComponent from '../components/ModalComponent';
 import { Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import Loader from '../components/Loader';
 
 const { width, height } = Dimensions.get('window');
 
@@ -23,6 +24,7 @@ const TaskScreen = () => {
   const [selectedTask, setSelectedTask] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleTaskComplete = (task) => {
     setSelectedTask(task);
@@ -64,6 +66,7 @@ const TaskScreen = () => {
 
   const fetchTasks = async (taskType) => {
     try {
+      setIsLoading(true)
       const res = await getUserTasks(taskType, '', '');
       const formattedTasks = (res.data || []).map((task) => ({
         id: task.id.toString(),
@@ -92,6 +95,8 @@ const TaskScreen = () => {
     } catch (error) {
       console.error('Error fetching tasks:', error);
       setTasks([]); // Ensure tasks is set to empty array on error
+    }finally{
+      setIsLoading(false);
     }
   };
 
@@ -152,6 +157,8 @@ const TaskScreen = () => {
           isUpdating={isUpdating}
         />
       </SafeAreaView>
+
+      <Loader visible={isLoading}/>
     </GestureHandlerRootView>
   );
 };
