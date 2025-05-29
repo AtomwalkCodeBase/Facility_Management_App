@@ -40,38 +40,124 @@ const NewTaskCard = ({ task, onMarkComplete }) => {
    };
 
   // Define status-based styling
+  // const getStatusStyle = () => {
+  //   switch (task.status) {
+  //     case 'Completed':
+  //       return {
+  //         // bg: '#e8f5e9',
+  //         bg: '#27AE60',
+  //         // color: '#43a047',
+  //         color: '#fff',
+  //         icon: 'checkmark-circle'
+  //       };
+  //     case 'In Progress':
+  //       return {
+  //         bg: '#e3f2fd',
+  //         color: '#1976d2',
+  //         icon: 'time'
+  //       };
+  //     case 'Not planned':
+  //       return {
+  //         bg: '#ede7f6',
+  //         color: '#5e35b1',
+  //         icon: 'calendar'
+  //       };
+  //     default:
+  //       return {
+  //         // bg: '#e0f7fa',
+  //         bg: '#F39C12',
+  //         color: '#fff',
+  //         // color: '#00acc1',
+  //         icon: 'hourglass'
+  //       };
+  //   }
+  // };
+
   const getStatusStyle = () => {
-    switch (task.status) {
-      case 'Completed':
-        return {
-          // bg: '#e8f5e9',
-          bg: '#27AE60',
-          // color: '#43a047',
-          color: '#fff',
-          icon: 'checkmark-circle'
-        };
-      case 'In Progress':
-        return {
-          bg: '#e3f2fd',
-          color: '#1976d2',
-          icon: 'time'
-        };
-      case 'Not planned':
-        return {
-          bg: '#ede7f6',
-          color: '#5e35b1',
-          icon: 'calendar'
-        };
-      default:
-        return {
-          // bg: '#e0f7fa',
-          bg: '#F39C12',
-          color: '#fff',
-          // color: '#00acc1',
-          icon: 'hourglass'
-        };
-    }
-  };
+  switch (task.status) {
+    // Success/Completion states
+    case 'Completed':
+      return {
+        bg: '#27AE60', // Green
+        color: '#fff',
+        icon: 'checkmark-circle'
+      };
+    
+    // Active/Working states
+    case 'Planned':
+      return {
+        bg: '#3498DB', // Blue
+        color: '#fff',
+        icon: 'calendar-outline'
+      };
+    case 'In Progress':
+      return {
+        bg: '#9B59B6', // Purple
+        color: '#fff',
+        icon: 'play-circle'
+      };
+    
+    // Paused/Waiting states
+    case 'On Hold':
+      return {
+        bg: '#E67E22', // Orange
+        color: '#fff',
+        icon: 'pause-circle'
+      };
+    case 'Waiting for Response':
+      return {
+        bg: '#F1C40F', // Yellow
+        color: '#fff',
+        icon: 'time-outline'
+      };
+    case 'Reassigned to User':
+      return {
+        bg: '#FF8C00', // Dark Orange
+        color: '#fff',
+        icon: 'person-circle'
+      };
+    
+    // Negative/Closed states
+    case 'Closed- Not Successful':
+      return {
+        bg: '#E74C3C', // Red
+        color: '#fff',
+        icon: 'close-circle'
+      };
+    case 'Deleted':
+      return {
+        bg: '#95A5A6', // Gray
+        color: '#fff',
+        icon: 'trash-outline'
+      };
+    case 'Not Planned':
+      return {
+        bg: '#7F8C8D', // Dark Gray
+        color: '#fff',
+        icon: 'ban-outline'
+      };
+    
+    // Default fallback
+    default:
+      return {
+        bg: '#BDC3C7', // Light Gray
+        color: '#2C3E50', // Dark text for contrast
+        icon: 'help-circle-outline'
+      };
+  }
+};
+
+  const hiddenStatuses = [
+  // 'Planned',
+  'In Progress',
+  'Completed',
+  'On Hold',
+  'Reassigned to User',
+  'Closed- Not Successful',
+  'Waiting for Response',
+  'Deleted',
+  'Not Planned'
+];
 
   const statusStyle = getStatusStyle();
   const priorityColor = getPriorityColor();
@@ -97,7 +183,7 @@ const NewTaskCard = ({ task, onMarkComplete }) => {
       <View style={styles.statusContainer}>
         <View style={[styles.statusBadge, { backgroundColor: statusStyle.bg }]}>
           <Ionicons name={statusStyle.icon} size={14} color="rgba(255,255,255,0.9)" />
-          <Text style={[styles.statusText, { color: statusStyle.color }]}>
+          <Text style={[styles.statusText, { color: statusStyle.color }]} ellipsizeMode="tail" numberOfLines={1}>
             {task.status}
           </Text>
         </View>
@@ -161,7 +247,7 @@ const NewTaskCard = ({ task, onMarkComplete }) => {
       </View>
 
       {/* Complete Button */}
-      {task.status !== 'Completed' && (
+      {!hiddenStatuses.includes(task.status) && (
         <View style={styles.buttonSection}>
           <TouchableOpacity 
             style={styles.completeButton} 
@@ -217,6 +303,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   statusText: {
+    maxWidth: 70,
     fontSize: 12,
     fontWeight: 'bold',
     textTransform: 'uppercase',
