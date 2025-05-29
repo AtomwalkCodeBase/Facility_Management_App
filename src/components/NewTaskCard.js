@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { AntDesign, Ionicons } from '@expo/vector-icons';
 import { colors } from '../Styles/appStyle';
 
 const NewTaskCard = ({ task, onMarkComplete }) => {
+    const [showFullDescription, setShowFullDescription] = useState(false);
+  const [isLongDescription, setIsLongDescription] = useState(false);
   // Define priority-based colors
   // const getPriorityColor = () => {
   //   switch (task.priority) {
@@ -78,6 +80,12 @@ const NewTaskCard = ({ task, onMarkComplete }) => {
     onMarkComplete(task); // Pass the task to Homepage to trigger the modal
   };
 
+    const handleDescriptionTextLayout = (e) => {
+    if (e.nativeEvent.lines.length > 2 && !isLongDescription) {
+      setIsLongDescription(true);
+    }
+  };
+
   return (
     <Animated.View style={[styles.card, { backgroundColor: priorityColor.bg }]}>
       {/* Top Section - Title */}
@@ -98,9 +106,23 @@ const NewTaskCard = ({ task, onMarkComplete }) => {
       </View>
 
       {/* Description */}
-      {task.description ? (
+{task.description ? (
         <View style={styles.descriptionSection}>
-          <Text style={[styles.description, {color: priorityColor.color}]}>{task.description}</Text>
+          <Text
+            style={[styles.description, { color: priorityColor.color }]}
+            numberOfLines={showFullDescription ? undefined : 2}
+            ellipsizeMode="tail"
+            onTextLayout={handleDescriptionTextLayout}
+          >
+            {task.description}
+          </Text>
+          {isLongDescription && (
+            <TouchableOpacity onPress={() => setShowFullDescription(!showFullDescription)}>
+              <Text style={{ color: priorityColor.color, marginTop: 4,   fontWeight: 'bold', }}>
+                {showFullDescription ? 'Read less' : 'Read more'}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
       ) : null}
 
