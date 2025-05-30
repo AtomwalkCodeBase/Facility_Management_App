@@ -81,7 +81,7 @@ const ResetPasswordScreen = () => {
     const response = await setUserPinView(oldPin, newPin, employeeId);
     // console.log('API Response:', response);
 
-    if (response && response.status) {
+    if (response && response.status == 200) {
       await AsyncStorage.setItem('userPin', newPin);
       setIsLoading(false);
       setIsSuccessModalVisible(true);
