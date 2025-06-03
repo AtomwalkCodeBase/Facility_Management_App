@@ -28,7 +28,7 @@ export async function getCompanyInfo() {
 
 export function getDBListInfo() {
    let data = {
-             'mobile_app_type': 'CRM_C'
+             'mobile_app_type': 'FMS_E'
     };
     return authAxiosGET(getDbList, data)
 }
