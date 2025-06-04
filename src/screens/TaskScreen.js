@@ -8,6 +8,7 @@ import ModalComponent from '../components/ModalComponent';
 import { Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Loader from '../components/Loader';
+import HeaderComponent from '../components/HeaderComponent';
 
 const { width, height } = Dimensions.get('window');
 
@@ -100,13 +101,19 @@ const TaskScreen = () => {
     }
   };
 
+    const handleBackPress = () => navigation.goBack();
+
   useEffect(() => {
     fetchTasks(selectedFilter);
   }, [selectedFilter]);
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaView style={styles.container}>
+    <>
+       <HeaderComponent headerTitle="Task Screen" onBackPress={handleBackPress} />
+      {isLoading ? (
+        <Loader visible={isLoading} />
+      ) : (
+      <SafeAreaView style={styles.container} edges={['right', 'bottom', 'left']}>
         {/* Day Filter Buttons */}
         <View style={styles.filterContainer}>
           {dayFilterOptions.map((filter) => (
@@ -157,9 +164,10 @@ const TaskScreen = () => {
           isUpdating={isUpdating}
         />
       </SafeAreaView>
+      )}
 
-      <Loader visible={isLoading}/>
-    </GestureHandlerRootView>
+ {/* <Loader visible={isLoading}/> */}
+    </>
   );
 };
 
@@ -173,8 +181,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-evenly',
     paddingVertical: height * 0.015,
     backgroundColor: '#fff',
-    elevation: 5,
-    marginBottom: height * 0.02,
+    // elevation: 3,
+    // marginBottom: height * 0.02,
   },
   filterButton: {
     paddingVertical: height * 0.012,

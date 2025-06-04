@@ -4,9 +4,9 @@ import TaskScreen from '../../src/screens/TaskScreen'
 
 const task = () => {
   return (
-	// <View>
+	<View style={{ flex: 1}}>
 		<TaskScreen />
-	// </View>
+	</View>
   )
 }
 

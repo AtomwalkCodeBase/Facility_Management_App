@@ -43,7 +43,7 @@ export const userTaskListURL =  async () => {
 
 export const empLoginURL = async () => {
   const db_name = await getDbName();
-  return `${endpoint}/emp_user_login/${db_name}/`;
+  return `${newEndpoint}/emp_user_login/${db_name}/`;
 }; 
 
 export const getDbList = `${endpoint}/get_applicable_site/`;

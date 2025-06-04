@@ -306,6 +306,7 @@ const HomeScreen = ({ navigation }) => {
               >
                 <Text style={styles.modalButtonText}>Cancel</Text>
               </TouchableOpacity>
+
               <TouchableOpacity
                 style={[styles.modalButton, styles.confirmButton]}
                 onPress={confirmCompletion}
@@ -435,7 +436,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 15,
+    marginBottom: 5,
     marginTop: 15,
   },
   taskListTitle: {
@@ -516,7 +517,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F44336",
   },
   confirmButton: {
-    backgroundColor: "#4A6FA5",
+    backgroundColor: "#1DB954",
   },
   modalButtonText: {
     color: "#FFFFFF",

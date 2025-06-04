@@ -254,8 +254,8 @@ const NewTaskCard = ({ task, onMarkComplete }) => {
             onPress={handlePress}
             activeOpacity={0.7}
           >
-            <AntDesign name="checkcircleo" size={24} color="black" />
-            <Text style={styles.buttonText}> MARK AS DONE</Text>
+            <AntDesign name="checkcircleo" size={22} color="black" />
+            <Text style={styles.buttonText}> Mark as Complete</Text>
           </TouchableOpacity>
         </View>
       )}

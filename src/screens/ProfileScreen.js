@@ -161,14 +161,12 @@ const ProfileScreen = () => {
             <InfoRow 
               icon="mail" 
               label="Email" 
-              // value={profile?.email_id || 'souvagyaranjandash8@gmail.com'} 
               value={profile?.email_id} 
             />
             <InfoRow 
               icon="phone" 
               label="Mobile" 
-              // value={profile?.mobile_number || '7381625406'} 
-              value={profile?.mobile_number} 
+              value={profile?.mobile_number || 'Not available'} 
             />
           </View>
 
