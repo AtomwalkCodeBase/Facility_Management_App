@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Text, Image, Dimensions } from 'react-native';
 import styled from 'styled-components/native';
@@ -37,7 +38,8 @@ const HeaderComponent = ({ headerTitle, onBackPress }) => {
     <HeaderContainer>
       <HeaderText>{headerTitle}</HeaderText>
       <BackButton onPress={onBackPress}>
-        <Image source={BackIcon} style={{ width: 24, height: 24 }} />
+       <Ionicons name="arrow-back-circle-sharp" size={35} color="#4A6FA5" />
+        {/* <Image source={BackIcon} style={{ width: 24, height: 24 }} /> */}
       </BackButton>
     </HeaderContainer>
   );

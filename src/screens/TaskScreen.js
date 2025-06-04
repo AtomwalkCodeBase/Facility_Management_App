@@ -9,6 +9,7 @@ import { Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Loader from '../components/Loader';
 import HeaderComponent from '../components/HeaderComponent';
+import { useNavigation } from 'expo-router';
 
 const { width, height } = Dimensions.get('window');
 
@@ -26,6 +27,7 @@ const TaskScreen = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+    const navigation = useNavigation();
 
   const handleTaskComplete = (task) => {
     setSelectedTask(task);
