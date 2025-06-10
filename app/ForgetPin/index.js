@@ -31,6 +31,7 @@ const ResetPinScreen = () => {
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
 const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     fetchDbList();
@@ -81,8 +82,9 @@ const [successMessage, setSuccessMessage] = useState('');
       setCompanyError('Please select your company');
       return false;
     }
-    if (!mobileNumberOrEmpId) {
-      Alert.alert('Error', 'Please enter your Employee ID or Mobile Number');
+    if (!mobileNumberOrEmpId || mobileNumberOrEmpId.length < 10) {
+      // Alert.alert('Error', 'Please enter your Employee ID or Mobile Number');
+      setErrorMessage("Please enter your Employee ID or Mobile Number");
       return false;
     }
     return true;
@@ -115,6 +117,13 @@ const [successMessage, setSuccessMessage] = useState('');
         'Please check your registered email & login with new PIN.'
       );
       setIsSuccessModalVisible(true);
+
+      setTimeout(() => {
+         router.replace({
+           pathname: "AuthScreen",
+           params: { backTohome: "true" }
+         });
+       }, 3000);
     } else {
       throw new Error(response?.data?.message || 'Failed to process your request');
     }
@@ -182,6 +191,7 @@ const [successMessage, setSuccessMessage] = useState('');
                   maxLength={20}
                 />
               </InputWrapper>
+              {errorMessage ? <ErrorText>{errorMessage}</ErrorText> : null}
 
               <SubmitButton 
                 onPress={handleSubmit}
@@ -402,6 +412,12 @@ const BackButtonText = styled.Text`
   font-size: ${scaleWidth(16)}px;
   font-weight: 500;
   text-decoration-line: underline;
+`;
+
+const ErrorText = styled.Text`
+  color: #e74c3c;
+  font-size: ${scaleWidth(14)}px;
+  margin-bottom: ${scaleHeight(15)}px;
 `;
 
 export default ResetPinScreen;

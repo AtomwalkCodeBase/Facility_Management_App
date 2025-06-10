@@ -5,7 +5,7 @@ import { View, TextInput, TouchableOpacity, ActivityIndicator, StyleSheet, Keybo
 import { FontAwesome, Ionicons, MaterialIcons, Entypo } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Logos from '../../assets/images/Atom_walk_logo.jpg';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { empLoginURL } from '../../src/services/ConstantServies';
 import { getCompanyInfo, getDBListInfo } from '../../src/services/authServices';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -25,6 +25,7 @@ const scaleHeight = (size) => (height / 812) * size;
 
 
 const LoginScreen = () => {
+    const { backTohome } = useLocalSearchParams();
   const router = useRouter();
   const [mobileNumberOrEmpId, setMobileNumberOrEmpId] = useState('');
   const [dbName, setDBName] = useState('');
@@ -310,7 +311,7 @@ useEffect(() => {
         } catch (error) {
           console.error('Error fetching company info:', error.message);
         }
-        router.push('/home');
+        router.replace('/home');
       } else {
         setErrorMessage('Invalid credentials');
       }
@@ -455,21 +456,25 @@ useEffect(() => {
                     </InputContainer>
                   </Card>
 
-                  {(userPin && bioStatus) && (
-                    <AlternativeLogin onPress={handlePressPassword}>
-                      <FingerprintIcon>
-                        <Entypo name="fingerprint" size={scaleWidth(24)} color="#fff" />
-                      </FingerprintIcon>
-                      <AlternativeLoginText>Login with PIN/Fingerprint</AlternativeLoginText>
-                    </AlternativeLogin>
-                  )}
+              {!backTohome && (
+                    <>
+                      {(userPin && bioStatus) && (
+                        <AlternativeLogin onPress={handlePressPassword}>
+                          <FingerprintIcon>
+                            <Entypo name="fingerprint" size={scaleWidth(24)} color="#fff" />
+                          </FingerprintIcon>
+                          <AlternativeLoginText>Login with PIN/Fingerprint</AlternativeLoginText>
+                        </AlternativeLogin>
+                      )}
 
-                  <TouchableOpacity 
-                    onPress={handlePressForget}
-                    style={styles.forgetPinButton}
-                  >
-                    <Text style={styles.forgetPinText}>Forgot PIN?</Text>
-                  </TouchableOpacity>
+                      <TouchableOpacity 
+                        onPress={handlePressForget}
+                        style={styles.forgetPinButton}
+                      >
+                        <Text style={styles.forgetPinText}>Forgot PIN?</Text>
+                      </TouchableOpacity>
+                    </>
+                  )}
                 </Content>
                 </ScrollView>
                 </MainContent>

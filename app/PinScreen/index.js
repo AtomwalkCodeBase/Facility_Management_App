@@ -150,6 +150,12 @@ const AuthScreen = () => {
         }
     };
 
+    const handlePressForget = () => {
+        router.push({
+            pathname: 'ForgetPin',
+            });
+        };
+
     return (
         <SafeAreaView style={styles.container}>
             <StatusBar backgroundColor="#4A6FA5" barStyle="light-content" />
@@ -287,8 +293,6 @@ const AuthScreen = () => {
                                 LOGIN
                             </Text>
                         </TouchableOpacity>
-
-                        
                         
                         {showBiomatricOption && (
                             <TouchableOpacity 
@@ -299,6 +303,13 @@ const AuthScreen = () => {
                                 <Text style={styles.backButtonText}>Back to Login Options</Text>
                             </TouchableOpacity>
                         )}
+
+                        <TouchableOpacity 
+                                            onPress={handlePressForget}
+                                            style={styles.forgetPinButton}
+                                          >
+                                            <Text style={styles.forgetPinText}>Forgot PIN?</Text>
+                                          </TouchableOpacity>
                     </View>
                 ) : (
                     <View style={styles.card}>
@@ -322,7 +333,9 @@ const AuthScreen = () => {
                             <Icon name="arrow-back-outline" size={16} color="#4A6FA5" style={styles.backIcon} />
                             <Text style={styles.backButtonText}>Back to Login Options</Text>
                         </TouchableOpacity>
+
                     </View>
+                    
                 )}
 
                 <View style={styles.securityNote}>
@@ -635,6 +648,18 @@ noteText: {
 bulletPoint: {
     fontWeight: 'bold',
     color: '#FFA726',
+},
+  forgetPinButton: {
+  marginTop: scaleHeight(20),
+  alignSelf: 'center',
+  paddingVertical: scaleHeight(10),
+  paddingHorizontal: scaleWidth(20),
+},
+forgetPinText: {
+  color: '#6B8CBE',
+  fontSize: scaleWidth(16),
+  fontWeight: '500',
+  textDecorationLine: 'underline',
 },
 });
 

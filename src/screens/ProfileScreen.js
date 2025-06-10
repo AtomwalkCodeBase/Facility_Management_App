@@ -10,8 +10,12 @@ import HeaderComponent from '../components/HeaderComponent';
 import moment from 'moment';
 import ConfirmationModal from '../components/ConfirmationModal';
 import Loader from '../components/Loader';
+import Constants from 'expo-constants';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
+
+const scaleWidth = (size) => (width / 375) * size;
+const scaleHeight = (size) => (height / 812) * size;
 
 const ProfileScreen = () => {
   const { logout } = useContext(AppContext);
@@ -25,6 +29,8 @@ const ProfileScreen = () => {
 
   const router = useRouter();
   const navigation = useNavigation();
+
+  const appVersion = Constants.expoConfig?.version || '0.0.1';
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -227,6 +233,10 @@ const ProfileScreen = () => {
             </TouchableOpacity>
           </View>
 
+            <View style={styles.fixedFooter}>
+              <Text>Version Code: {appVersion}</Text>
+            </View>
+
           {/* QR Modal */}
           <QRModal
             isVisible={isModalVisible}
@@ -422,6 +432,24 @@ const styles = StyleSheet.create({
     // backgroundColor: colors.muted,
     marginLeft: 68,
   },
+    fixedFooter: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: scaleHeight(10),
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+    backgroundColor: '#fff',
+    width: '100%',
+  },
+  footerText: {
+    color: "#333",
+    fontSize: scaleWidth(14),
+    fontWeight: '500',
+  }
 });
 
 export default ProfileScreen;
