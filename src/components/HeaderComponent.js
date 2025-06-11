@@ -1,46 +1,52 @@
-import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import { Text, Image, Dimensions } from 'react-native';
-import styled from 'styled-components/native';
+import React from "react";
+import { View, Text, TouchableOpacity, SafeAreaView } from "react-native";
+import styled from "styled-components/native";
+import { Ionicons } from "@expo/vector-icons"; // For the back arrow icon
 
-const { width, height } = Dimensions.get('window');
-
-const HeaderContainer = styled.View`
-  background-color: white;
-  padding: ${height < 700 ? '10px 8px' : '15px 10px'};
-  margin-top: ${height < 806 ? '20px' : '48px'};
+// Styled Components for the Header
+const HeaderContainer = styled(SafeAreaView)`
+  background-color: #fff;
+  padding-bottom: 10px;
+  padding-horizontal: 20px;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
   border-bottom-width: 1px;
-  border-bottom-color: #ccc;
-  elevation: 2;
-  width: 100%;
-  min-height: ${height < 700 ? '50px' : '60px'};
+  border-bottom-color: #E0E0E0;
+  padding-top: 40px;
 `;
 
-// Styled text for the header title
-const HeaderText = styled.Text`
-  font-size: ${width < 360 ? '18px' : '20px'};
-  font-weight: bold;
-`;
-
-// Styled container for the back button
-const BackButton = styled.TouchableOpacity`
+const BackButton = styled(TouchableOpacity)`
   padding: 5px;
 `;
 
-// Path to the local back icon
-const BackIcon = require('../../assets/images/back_icon.png');
+const HeaderTitle = styled(Text)`
+  font-size: 20px;
+  font-weight: bold;
+  color:  #333;
+  flex: 1;
+  padding-horizontal: 10px;
+  text-align: center;
+`;
 
+const PlaceholderView = styled(View)`
+  width: 30px; 
+`;
+
+// HeaderComponent
 const HeaderComponent = ({ headerTitle, onBackPress }) => {
   return (
     <HeaderContainer>
-      <HeaderText>{headerTitle}</HeaderText>
+      {/* Back Button */}
       <BackButton onPress={onBackPress}>
-       <Ionicons name="arrow-back-circle-sharp" size={35} color="#4A6FA5" />
-        {/* <Image source={BackIcon} style={{ width: 24, height: 24 }} /> */}
+        <Ionicons name="arrow-back" size={24} color="#333" />
       </BackButton>
+
+      {/* Title */}
+      <HeaderTitle>{headerTitle}</HeaderTitle>
+
+      {/* Placeholder to balance the layout and keep the title centered */}
+      <PlaceholderView />
     </HeaderContainer>
   );
 };

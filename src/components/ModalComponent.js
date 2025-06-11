@@ -17,16 +17,16 @@ export default function ModalComponent({modalVisible, setModalVisible, confirmCo
             <Text style={styles.modalText}>Are you sure you want to complete this task?</Text>
             <View style={styles.buttonContainer}>
               <TouchableOpacity 
-                style={[styles.button, styles.confirmButton]} 
-                onPress={confirmCompletion}
-              >
-                <Text style={styles.buttonText}>Confirm</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
                 style={[styles.button, styles.cancelButton]} 
                 onPress={cancelCompletion}
               >
                 <Text style={styles.buttonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.button, styles.confirmButton]} 
+                onPress={confirmCompletion}
+              >
+                <Text style={styles.buttonText}>Confirm</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -64,6 +64,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   modalText: {
+    fontWeight: "bold",
     textAlign: 'center',
     fontSize: width * 0.045,
     marginBottom: height * 0.02,
@@ -82,10 +83,10 @@ const styles = StyleSheet.create({
     marginHorizontal: width * 0.02,
   },
   confirmButton: {
-    backgroundColor: "#6A1B9A",
+    backgroundColor: "#1DB954",
   },
   cancelButton: {
-    backgroundColor: "#D32F2F",
+    backgroundColor: "#F44336",
   },
   buttonText: {
     color: "white",

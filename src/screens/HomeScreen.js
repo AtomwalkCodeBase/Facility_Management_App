@@ -9,8 +9,12 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import TaskCard from "../components/NewTaskCard";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import LottieView from "lottie-react-native";
+import { useIsFocused } from '@react-navigation/native';
+
+
+// import LottieView from "lottie-react-native";
 import Loader from "../components/Loader";
+import ModalComponent from "../components/ModalComponent";
 
 const { width, height } = Dimensions.get("window");
 
@@ -33,7 +37,7 @@ const HomeScreen = ({ navigation }) => {
   const [selectedStatusFilter, setSelectedStatusFilter] = useState("Planned");
   const [tasks, setTasks] = useState([]);
   const [isLoading, setIsLoading] = useState(false)
-
+  const isFocused = useIsFocused();
   useEffect(() => {
     fetchData();
     Animated.timing(fadeAnim, {
@@ -41,17 +45,18 @@ const HomeScreen = ({ navigation }) => {
       duration: 1000,
       useNativeDriver: true,
     }).start();
+
   }, []);
 
-  useEffect(() => {
-    if (route?.params?.refresh) {
-      fetchTasks(selectedDayFilter, selectedStatusFilter);
-    }
-  }, [route?.params?.refresh]);
+  // useEffect(() => {
+  //   if (route?.params?.refresh) {
+  //     fetchTasks(selectedDayFilter, selectedStatusFilter);
+  //   }
+  // }, [route?.params?.refresh]);
 
   useEffect(() => {
     fetchTasks(selectedDayFilter, selectedStatusFilter);
-  }, [selectedDayFilter, selectedStatusFilter]);
+  }, [selectedDayFilter, selectedStatusFilter,isFocused]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -131,7 +136,7 @@ const HomeScreen = ({ navigation }) => {
   };
 
   const handleTaskComplete = (task) => {
-    if (task.status.toLowerCase() === "completed") return;
+    // if (task.status.toLowerCase() === "completed") return;
     setSelectedTask(task);
     setModalVisible(true);
   };
@@ -288,16 +293,16 @@ const HomeScreen = ({ navigation }) => {
       <Modal visible={modalVisible} transparent animationType="fade">
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <LottieView
+            {/* <LottieView
               source={require('../../assets/Animation.json')}
               autoPlay
               loop={false}
               style={styles.animation}
-            />
+            /> */}
             <Text style={styles.modalText}>
-              {isUpdating ? "Completing Task..." : "Task Completed!"}
+              {isUpdating ? "Completing Task..." : "Are you sure you want to complete this task?"}
             </Text>
-            <Text style={styles.taskName}>{selectedTask?.title}</Text>
+            {/* <Text style={styles.taskName}>{selectedTask?.title}</Text> */}
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.cancelButton]}
@@ -319,7 +324,15 @@ const HomeScreen = ({ navigation }) => {
         </View>
       </Modal>
 
+
       <Loader visible={isLoading} />
+      {/* <ModalComponent
+               modalVisible={modalVisible}
+               setModalVisible={setModalVisible}
+               confirmCompletion={confirmCompletion}
+               cancelCompletion={cancelCompletion}
+               isUpdating={isUpdating}
+       /> */}
     </GestureHandlerRootView>
   );
 };
@@ -490,10 +503,12 @@ const styles = StyleSheet.create({
     height: 100,
   },
   modalText: {
+    textAlign: 'center',
     fontSize: 18,
     fontWeight: "bold",
     color: "#333333",
     marginVertical: 10,
+    marginBottom:30
   },
   taskName: {
     fontSize: 16,

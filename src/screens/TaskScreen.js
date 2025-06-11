@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Loader from '../components/Loader';
 import HeaderComponent from '../components/HeaderComponent';
 import { useNavigation } from 'expo-router';
+import { useIsFocused } from '@react-navigation/native';
 
 const { width, height } = Dimensions.get('window');
 
@@ -22,11 +23,13 @@ const dayFilterOptions = [
 
 const TaskScreen = () => {
   const [tasks, setTasks] = useState([]);
-  const [selectedFilter, setSelectedFilter] = useState('ALL');
+  const [selectedFilter, setSelectedFilter] = useState('');
   const [selectedTask, setSelectedTask] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const isFocused = useIsFocused();
+  
     const navigation = useNavigation();
 
   const handleTaskComplete = (task) => {
@@ -107,7 +110,7 @@ const TaskScreen = () => {
 
   useEffect(() => {
     fetchTasks(selectedFilter);
-  }, [selectedFilter]);
+  }, [selectedFilter, isFocused]);
 
   return (
     <>
