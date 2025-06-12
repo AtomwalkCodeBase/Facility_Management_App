@@ -1,19 +1,23 @@
 import React from "react";
-import { View, Text, TouchableOpacity, SafeAreaView } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  SafeAreaView,
+  Platform,
+  StatusBar,
+} from "react-native";
 import styled from "styled-components/native";
-import { Ionicons } from "@expo/vector-icons"; // For the back arrow icon
+import { Ionicons } from "@expo/vector-icons";
 
-// Styled Components for the Header
 const HeaderContainer = styled(SafeAreaView)`
   background-color: #fff;
-  padding-bottom: 10px;
-  padding-horizontal: 20px;
+  padding: ${Platform.OS === "android" ? StatusBar.currentHeight + 10 : 20}px 20px 10px 20px;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
   border-bottom-width: 1px;
-  border-bottom-color: #E0E0E0;
-  padding-top: 40px;
+  border-bottom-color: #e0e0e0;
 `;
 
 const BackButton = styled(TouchableOpacity)`
@@ -23,30 +27,30 @@ const BackButton = styled(TouchableOpacity)`
 const HeaderTitle = styled(Text)`
   font-size: 20px;
   font-weight: bold;
-  color:  #333;
-  flex: 1;
-  padding-horizontal: 10px;
+  color: #333;
   text-align: center;
+  flex: 1;
 `;
 
-const PlaceholderView = styled(View)`
-  width: 30px; 
+const HeaderSide = styled(View)`
+  width: 30px;
+  align-items: center;
+  justify-content: center;
 `;
 
 // HeaderComponent
 const HeaderComponent = ({ headerTitle, onBackPress }) => {
   return (
     <HeaderContainer>
-      {/* Back Button */}
-      <BackButton onPress={onBackPress}>
-        <Ionicons name="arrow-back" size={24} color="#333" />
-      </BackButton>
+      <HeaderSide>
+        <BackButton onPress={onBackPress}>
+          <Ionicons name="arrow-back" size={24} color="#333" />
+        </BackButton>
+      </HeaderSide>
 
-      {/* Title */}
       <HeaderTitle>{headerTitle}</HeaderTitle>
 
-      {/* Placeholder to balance the layout and keep the title centered */}
-      <PlaceholderView />
+      <HeaderSide>{/* Empty but required for layout symmetry */}</HeaderSide>
     </HeaderContainer>
   );
 };
