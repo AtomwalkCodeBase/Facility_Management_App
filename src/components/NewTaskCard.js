@@ -1,201 +1,145 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
-import { AntDesign, Ionicons } from '@expo/vector-icons';
+import { AntDesign, FontAwesome, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { colors } from '../Styles/appStyle';
+import { router } from 'expo-router';
+import ImageModal from './ImageModal';
 
 const NewTaskCard = ({ task, onMarkComplete }) => {
-    const [showFullDescription, setShowFullDescription] = useState(false);
+  const [showFullDescription, setShowFullDescription] = useState(false);
   const [isLongDescription, setIsLongDescription] = useState(false);
-  // Define priority-based colors
-  // const getPriorityColor = () => {
-  //   switch (task.priority) {
-  //     case 'High':
-  //       return bg: '#D9E6F6', // Red
-  //     case 'Medium':
-  //       return '#FF9500'; // Orange
-  //     case 'Low':
-  //       return '#45B7D1'; // Green
-  //     default:
-  //       return '#1a73e8'; // Blue
-  //   }
-  // };
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
-   const getPriorityColor = () => {
-     switch (task.priority) {
-       case "High":
-         return { bg: "#D9E6F6", color: "#3B4A75" }; // Red
-       case "Medium":
-         return {
-           bg: "#DFF6E4",
-           color: "#2F5D3B",
-         }; // Orange
-       case "Low":
-         return {
-           bg: "#FDE8DC",
-           color: "#7A4E35",
-         }; // Green
-       default:
-         return { bg: "#E9E4F0", color: "#4A4370" }; // Blue
-     }
-   };
-
-  // Define status-based styling
-  // const getStatusStyle = () => {
-  //   switch (task.status) {
-  //     case 'Completed':
-  //       return {
-  //         // bg: '#e8f5e9',
-  //         bg: '#27AE60',
-  //         // color: '#43a047',
-  //         color: '#fff',
-  //         icon: 'checkmark-circle'
-  //       };
-  //     case 'In Progress':
-  //       return {
-  //         bg: '#e3f2fd',
-  //         color: '#1976d2',
-  //         icon: 'time'
-  //       };
-  //     case 'Not planned':
-  //       return {
-  //         bg: '#ede7f6',
-  //         color: '#5e35b1',
-  //         icon: 'calendar'
-  //       };
-  //     default:
-  //       return {
-  //         // bg: '#e0f7fa',
-  //         bg: '#F39C12',
-  //         color: '#fff',
-  //         // color: '#00acc1',
-  //         icon: 'hourglass'
-  //       };
-  //   }
-  // };
-
-  const getStatusStyle = () => {
-  switch (task.status) {
-    // Success/Completion states
-    case 'Completed':
-      return {
-        bg: '#27AE60', // Green
-        color: '#fff',
-        icon: 'checkmark-circle'
-      };
+  // Memoized priority configuration
+  const priorityConfig = useMemo(() => {
+    const priorityMap = {
+      "01": "High",
+      "02": "Medium", 
+      "03": "Low"
+    };
     
-    // Active/Working states
-    case 'Planned':
-      return {
-        bg: '#3498DB', // Blue
-        color: '#fff',
-        icon: 'calendar-outline'
-      };
-    case 'In Progress':
-      return {
-        bg: '#9B59B6', // Purple
-        color: '#fff',
-        icon: 'play-circle'
-      };
+    const priorityName = priorityMap[task.priority] || task.priority || "Medium";
     
-    // Paused/Waiting states
-    case 'On Hold':
-      return {
-        bg: '#E67E22', // Orange
-        color: '#fff',
-        icon: 'pause-circle'
-      };
-    case 'Waiting for Response':
-      return {
-        bg: '#F1C40F', // Yellow
-        color: '#fff',
-        icon: 'time-outline'
-      };
-    case 'Reassigned to User':
-      return {
-        bg: '#FF8C00', // Dark Orange
-        color: '#fff',
-        icon: 'person-circle'
-      };
+    const colors = {
+      "High": { 
+        cardBg: "#FEF7F7", 
+        accentBg: "#FFF5F5", 
+        border: "#FECACA", 
+        text: "#B91C1C", 
+        dot: "#DC2626",
+        shadow: "#FCA5A5"
+      },
+      "Medium": { 
+        cardBg: "#FFFBF7", 
+        accentBg: "#FFF7ED", 
+        border: "#FED7AA", 
+        text: "#C2410C", 
+        dot: "#EA580C",
+        shadow: "#FDBA74"
+      },
+      "Low": { 
+        cardBg: "#F6FDF9", 
+        accentBg: "#F0FDF4", 
+        border: "#BBF7D0", 
+        text: "#166534", 
+        dot: "#16A34A",
+        shadow: "#86EFAC"
+      }
+    };
     
-    // Negative/Closed states
-    case 'Closed- Not Successful':
-      return {
-        bg: '#E74C3C', // Red
-        color: '#fff',
-        icon: 'close-circle'
-      };
-    case 'Deleted':
-      return {
-        bg: '#95A5A6', // Gray
-        color: '#fff',
-        icon: 'trash-outline'
-      };
-    case 'Not Planned':
-      return {
-        bg: '#7F8C8D', // Dark Gray
-        color: '#fff',
-        icon: 'ban-outline'
-      };
+    return {
+      name: priorityName,
+      ...colors[priorityName]
+    };
+  }, [task.priority]);
+
+  // Memoized status configuration
+  const statusConfig = useMemo(() => {
+    const statusColors = {
+      'Completed': { bg: '#10B981', icon: 'checkmark-circle' },
+      'Planned': { bg: '#3B82F6', icon: 'calendar-outline' },
+      'In Progress': { bg: '#8B5CF6', icon: 'play-circle' },
+      'On Hold': { bg: '#F59E0B', icon: 'pause-circle' },
+      'Waiting for Response': { bg: '#EF4444', icon: 'time-outline' },
+      'Reassigned to User': { bg: '#F97316', icon: 'person-circle' },
+      'Closed- Not Successful': { bg: '#EF4444', icon: 'close-circle' },
+      'Deleted': { bg: '#6B7280', icon: 'trash-outline' },
+      'Not Planned': { bg: '#6B7280', icon: 'ban-outline' }
+    };
     
-    // Default fallback
-    default:
-      return {
-        bg: '#BDC3C7', // Light Gray
-        color: '#2C3E50', // Dark text for contrast
-        icon: 'help-circle-outline'
-      };
-  }
-};
+    return statusColors[task.status] || { bg: '#6B7280', icon: 'help-circle-outline' };
+  }, [task.status]);
 
-  const hiddenStatuses = [
-  // 'Planned',
-  'In Progress',
-  'Completed',
-  'On Hold',
-  'Reassigned to User',
-  'Closed- Not Successful',
-  'Waiting for Response',
-  'Deleted',
-  'Not Planned'
-];
+  // Determine if task can be marked complete
+  const canMarkComplete = useMemo(() => {
+    const hiddenStatuses = ['In Progress', 'Completed', 'On Hold', 'Reassigned to User', 
+                           'Closed- Not Successful', 'Waiting for Response', 'Deleted', 'Not Planned'];
+    return !hiddenStatuses.includes(task.status);
+  }, [task.status]);
 
-  const statusStyle = getStatusStyle();
-  const priorityColor = getPriorityColor();
+  const handlePress = () => onMarkComplete(task);
+  const handleImagePress = () => setIsModalVisible(true);
+  const handleCloseModal = () => setIsModalVisible(false);
 
-  const handlePress = () => {
-    onMarkComplete(task); // Pass the task to Homepage to trigger the modal
-  };
-
-    const handleDescriptionTextLayout = (e) => {
+  const handleDescriptionTextLayout = (e) => {
     if (e.nativeEvent.lines.length > 2 && !isLongDescription) {
       setIsLongDescription(true);
     }
   };
 
-  return (
-    <Animated.View style={[styles.card, { backgroundColor: priorityColor.bg }]}>
-      {/* Top Section - Title */}
-      <View style={styles.titleSection}>
-        <Text style={[styles.title, {color: priorityColor.color}]} numberOfLines={3}>{task.title}</Text>
-      
+  const formatTaskType = (type) => {
+    return type?.replace(/([A-Z])/g, ' $1').trim() || 'General Task';
+  };
 
-      {/* Status Badge */}
-      <View style={styles.statusContainer}>
-        <View style={[styles.statusBadge, { backgroundColor: statusStyle.bg }]}>
-          <Ionicons name={statusStyle.icon} size={14} color="rgba(255,255,255,0.9)" />
-          <Text style={[styles.statusText, { color: statusStyle.color }]} ellipsizeMode="tail" numberOfLines={1}>
-            {task.status}
+  const formatTime = () => {
+    const start = task.originalData?.start_time;
+    const end = task.originalData?.end_time;
+    if (!start && !end) return null;
+    return `${start || ''} ${end ? `- ${end}` : ''}`.trim();
+  };
+
+  return (
+    <Animated.View style={[
+      styles.card, 
+      { 
+        backgroundColor: priorityConfig.cardBg,
+        borderColor: priorityConfig.border,
+        shadowColor: priorityConfig.shadow,
+      }
+    ]}>
+      {/* Header Section */}
+      <View style={styles.header}>
+        <View style={styles.headerTop}>
+          <View style={styles.priorityIndicator}>
+            <View style={[styles.priorityDot, { backgroundColor: priorityConfig.dot }]} />
+            <Text style={[styles.priorityText, { color: priorityConfig.text }]}>
+              {priorityConfig.name}
+            </Text>
+          </View>
+          
+          <View style={[styles.statusBadge, { backgroundColor: statusConfig.bg }]}>
+            <Ionicons name={statusConfig.icon} size={12} color="white" />
+            <Text style={styles.statusText}>{task.status}</Text>
+          </View>
+        </View>
+
+        <Text style={styles.title} numberOfLines={2}>
+          {task.title.split('[')[0]}
+        </Text>
+
+        <View style={styles.taskTypeContainer}>
+          <MaterialCommunityIcons name="tag-outline" size={14} color="#6B7280" />
+          <Text style={styles.taskType}>
+            {task.originalData?.task_category_name || formatTaskType(task.taskType)}
           </Text>
         </View>
       </View>
 
-      </View>
-
-      {/* Description */}
-{task.description ? (
-        <View style={styles.descriptionSection}>
+      {/* Description Section */}
+      {task.description && (
+        <View style={[styles.descriptionContainer, { backgroundColor: priorityConfig.accentBg }]}>
           <Text
-            style={[styles.description, { color: priorityColor.color }]}
+            style={styles.description}
             numberOfLines={showFullDescription ? undefined : 2}
             ellipsizeMode="tail"
             onTextLayout={handleDescriptionTextLayout}
@@ -203,178 +147,261 @@ const NewTaskCard = ({ task, onMarkComplete }) => {
             {task.description}
           </Text>
           {isLongDescription && (
-            <TouchableOpacity onPress={() => setShowFullDescription(!showFullDescription)}>
-              <Text style={{ color: priorityColor.color, marginTop: 4,   fontWeight: 'bold', }}>
-                {showFullDescription ? 'Read less' : 'Read more'}
+            <TouchableOpacity 
+              onPress={() => setShowFullDescription(!showFullDescription)}
+              style={styles.readMoreButton}
+            >
+              <Text style={[styles.readMoreText, { color: priorityConfig.text }]}>
+                {showFullDescription ? 'Show less' : 'Show more'}
               </Text>
             </TouchableOpacity>
           )}
         </View>
-      ) : null}
-
-      {/* Task Details */}
-      <View style={styles.detailsSection}>
-        {/* Date */}
-       {(task.taskDate || task.originalData?.start_time || task.originalData?.end_time) ? (
-  <View style={styles.dateTimeRow}>
-    {/* Date */}
-    <View style={styles.inlineRow}>
-      {/* <Ionicons name="calendar-outline" size={16} color="rgba(255,255,255,0.9)" /> */}
-      <Ionicons name="calendar-outline" size={16} color={priorityColor.color}/>
-      <Text style={[styles.inlineText, {color: priorityColor.color}]}>{task.taskDate}</Text>
-    </View>
-
-    {/* Time */}
-    {(task.originalData?.start_time || task.originalData?.end_time) && (
-      <View style={styles.inlineRow}>
-        {/* <Ionicons name="time-outline" size={16} color="rgba(255,255,255,0.9)" /> */}
-        <Ionicons name="time-outline" size={16} color={priorityColor.color} />
-        <Text style={[styles.inlineText, {color: priorityColor.color}]}>
-          {`${task.originalData?.start_time || ''}${task.originalData?.end_time ? ' - ' + task.originalData.end_time : ''}`}
-        </Text>
-      </View>
-    )}
-  </View>
-) : null}
-
-        {/* Customer */}
-        {task.customer && task.customer !== 'No Customer' ? (
-          <View style={styles.detailRow}>
-             <Ionicons name="person-outline" size={16} color={priorityColor.color} />
-            <Text style={[styles.detailValue, {color: priorityColor.color}]}>{task.customer}</Text>
-          </View>
-        ) : null}
-      </View>
-
-      {/* Complete Button */}
-      {!hiddenStatuses.includes(task.status) && (
-        <View style={styles.buttonSection}>
-          <TouchableOpacity 
-            style={styles.completeButton} 
-            onPress={handlePress}
-            activeOpacity={0.7}
-          >
-            <AntDesign name="checkcircleo" size={22} color="black" />
-            <Text style={styles.buttonText}> Mark as Complete</Text>
-          </TouchableOpacity>
-        </View>
       )}
+
+      {/* Details Grid */}
+      <View style={styles.detailsGrid}>
+        {/* Date & Time Row */}
+        {task.taskDate && (
+          <View style={styles.detailRow}>
+            <View style={styles.detailItem}>
+              <Ionicons name="calendar-outline" size={16} color="#6B7280" />
+              <Text style={styles.detailText}>{task.taskDate}</Text>
+            </View>
+            {formatTime() && (
+              <View style={styles.detailItem}>
+                <Ionicons name="time-outline" size={16} color="#6B7280" />
+                <Text style={styles.detailText}>{formatTime()}</Text>
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* Customer Row */}
+        {task.customer && task.customer !== 'No Customer' && (
+          <View style={styles.detailRow}>
+            <View style={[styles.detailItem, styles.fullWidth]}>
+              <Ionicons name="person-outline" size={16} color="#6B7280" />
+              <Text style={styles.detailText} numberOfLines={1}>{task.customer}</Text>
+            </View>
+          </View>
+        )}
+
+        {/* Assigned To Row
+        {task.assignedTo && (
+          <View style={styles.detailRow}>
+            <View style={[styles.detailItem, styles.fullWidth]}>
+              <MaterialCommunityIcons name="account-supervisor" size={16} color="#6B7280" />
+              <Text style={styles.detailText} numberOfLines={1}>{task.assignedTo}</Text>
+            </View>
+          </View>
+        )} */}
+      </View>
+
+      {/* Image Attachment */}
+      {task?.originalData?.ref_file && (
+        <TouchableOpacity style={styles.imageAttachment} onPress={handleImagePress}>
+          <View style={styles.imageAttachmentContent}>
+            <FontAwesome name="image" size={16} color="#6B7280" />
+            <Text style={styles.imageAttachmentText}>Problem Image</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={16} color="#6B7280" />
+        </TouchableOpacity>
+      )}
+
+      {/* Action Button */}
+      {canMarkComplete && (
+        <TouchableOpacity 
+          style={styles.actionButton} 
+          onPress={handlePress}
+          activeOpacity={0.8}
+        >
+          <AntDesign name="checkcircleo" size={18} color="white" />
+          <Text style={styles.actionButtonText}>Mark Complete</Text>
+        </TouchableOpacity>
+      )}
+
+      <ImageModal
+        isVisible={isModalVisible}
+        onClose={handleCloseModal}
+        qrValue={task?.originalData?.ref_file || 'EMP-007'}
+      />
     </Animated.View>
   );
 };
 
-
-export default NewTaskCard;
 const styles = StyleSheet.create({
   card: {
-    marginVertical: 8,
-    marginHorizontal: 4,
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    backgroundColor: 'white', // Will be overridden by priority color
+    marginVertical: 6,
+    // marginHorizontal: 16,
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000', // Will be overridden by priority shadow
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 6,
+    borderWidth: 1.5,
+    borderColor: '#F3F4F6', // Will be overridden by priority border
   },
-  titleSection: {
-    // marginBottom: 12,
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    lineHeight: 26,
-    maxWidth: 200
-  },
-  statusContainer: {
-    alignItems: 'flex-start',
-    marginBottom: 12,
-  },
-  statusBadge: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 2,
-    alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  statusText: {
-    maxWidth: 70,
-    fontSize: 12,
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
-  },
-  descriptionSection: {
-    marginBottom: 8,
-    padding: 10,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 8,
-  },
-  description: {
-    fontSize: 16,
-    color: '#ffffff',
-    lineHeight: 22,
-  },
-  detailsSection: {
+  
+  header: {
     marginBottom: 16,
   },
-  detailRow: {
+  
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  
+  priorityIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  
+  priorityDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 6,
+  },
+  
+  priorityText: {
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+  },
+  
+  statusText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: 'white',
+    textTransform: 'uppercase',
+  },
+  
+  title: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111827',
+    lineHeight: 24,
     marginBottom: 8,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    padding: 10,
-    borderRadius: 6,
   },
-  detailLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    minWidth: 80,
+  
+  taskTypeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
-  detailValue: {
-    fontSize: 16,
-    color: '#ffffff',
-    flex: 1,
-    marginLeft: 8,
+  
+  taskType: {
+    fontSize: 13,
+    color: '#6B7280',
+    fontWeight: '500',
   },
-  buttonSection: {
+  
+  descriptionContainer: {
+    backgroundColor: '#F9FAFB', // Will be overridden by priority accent color
+    padding: 8,
+    borderRadius: 12,
+    marginBottom: 5,
+    borderLeft: 4,
+    borderLeftColor: '#E5E7EB',
+  },
+  
+  description: {
+    fontSize: 14,
+    color: '#374151',
+    lineHeight: 20,
+  },
+  
+  readMoreButton: {
     marginTop: 8,
   },
-  completeButton: {
-    flexDirection: "row",
-    justifyContent: "center",
+  
+  readMoreText: {
+    fontSize: 13,
+    color: '#3B82F6',
+    fontWeight: '600',
+  },
+  
+  detailsGrid: {
+    marginBottom: 16,
+  },
+  
+  detailRow: {
+    flexDirection: 'row',
+    marginBottom: 12,
+    gap: 16,
+  },
+  
+  detailItem: {
+    flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
+    flex: 1,
+    gap: 8,
+  },
+  
+  fullWidth: {
+    flex: 1,
+  },
+  
+  detailText: {
+    fontSize: 14,
+    color: '#374151',
+    fontWeight: '500',
+    flex: 1,
+  },
+  
+  imageAttachment: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F3F4F6',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  
+  imageAttachmentContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  
+  imageAttachmentText: {
+    fontSize: 14,
+    color: '#374151',
+    fontWeight: '500',
+  },
+  
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#3B82F6',
     paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 8,
+    borderRadius: 12,
+    gap: 8,
   },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333333',
-    letterSpacing: 1,
+  
+  actionButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: 'white',
   },
-  dateTimeRow: {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  marginBottom: 8,
-  backgroundColor: 'rgba(255,255,255,0.1)',
-  padding: 10,
-  borderRadius: 6,
-},
-inlineRow: {
-  flexDirection: 'row',
-  alignItems: 'center',
-},
-inlineText: {
-  fontSize: 16,
-  color: '#ffffff',
-  marginLeft: 8,
-},
 });
+
+export default NewTaskCard;

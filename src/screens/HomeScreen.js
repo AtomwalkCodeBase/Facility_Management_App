@@ -434,6 +434,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#F1F5F9",
     marginRight: 8,
     marginBottom: 8,
+        border: "1px",
+    borderColor: "#6B8CBE",
+    borderWidth: 0.3
   },
   filterPillSelected: {
     backgroundColor: "#4A6FA5",

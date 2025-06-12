@@ -98,6 +98,7 @@ const TaskScreen = () => {
       }));
 
       setTasks(formattedTasks);
+     
     } catch (error) {
       console.error('Error fetching tasks:', error);
       setTasks([]); // Ensure tasks is set to empty array on error
@@ -145,7 +146,7 @@ const TaskScreen = () => {
         {/* Task List or Empty State */}
         {tasks.length > 0 ? (
           <FlatList
-            data={tasks}
+            data={tasks.reverse()}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
               <NewTaskCard task={item} onMarkComplete={handleTaskComplete} />
