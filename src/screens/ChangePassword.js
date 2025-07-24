@@ -274,7 +274,7 @@ const ResetPasswordScreen = () => {
         visible={isSuccessModalVisible}
         onClose={() => {
           setIsSuccessModalVisible(false);
-          router.push({ pathname: 'home' });
+          router.back();
         }}
         message="Your PIN has been updated successfully."
       />
