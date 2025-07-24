@@ -7,7 +7,7 @@ export async function getProfileInfo() {
     const url = await profileDtlURL(); 
     try {
         const emp_id = await AsyncStorage.getItem('empId');
-        console.log("Auth Employee ID:", emp_id);
+        // console.log("Auth Employee ID:", emp_id);
 
         let data = {};
         if (emp_id) {

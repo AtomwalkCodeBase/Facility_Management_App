@@ -5,7 +5,7 @@ import { endpoint, newEndpoint } from "../services/ConstantServies";
 
 export const authAxios = async (url, data) => {
     let token = await AsyncStorage.getItem('userToken');
-    console.log('authaxios', token, data)
+    // console.log('authaxios', token, data)
     return axios.create({
         baseURL: endpoint,
         params: data,
