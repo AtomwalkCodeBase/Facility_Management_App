@@ -2,7 +2,6 @@ import React, { useContext, useEffect, useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, Dimensions, ScrollView, Switch } from 'react-native';
 import { MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import { AppContext } from '../../context/AppContext';
-import { getProfileInfo } from '../services/authServices';
 import { useNavigation, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import QRModal from '../components/QRModal';
@@ -12,91 +11,69 @@ import ConfirmationModal from '../components/ConfirmationModal';
 import Loader from '../components/Loader';
 import Constants from 'expo-constants';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 const scaleWidth = (size) => (width / 375) * size;
 const scaleHeight = (size) => (height / 812) * size;
 
 const ProfileScreen = () => {
-  const { logout } = useContext(AppContext);
-  const [profile, setProfile] = useState({});
+  const { profile, isLoading , logout } = useContext(AppContext);
   const [userPin, setUserPin] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [isBiometricModalVisible, setIsBiometricModalVisible] = useState(false); // New state for biometric modal
-  const [biometricEnabled, setBiometricEnabled] = useState(false);
-  const [pendingBiometricValue, setPendingBiometricValue] = useState(null);
-
-  const router = useRouter();
-  const navigation = useNavigation();
+  const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
+  const [useFingerprint, setUseFingerprint] = useState(false);  // actual setting
+  const [pendingValue, setPendingValue] = useState(null);        // for storing new value
+  const [modalVisible, setModalVisible] = useState(false);       // controls confirmation modal
 
   const appVersion = Constants.expoConfig?.version || '0.0.1';
 
+
+  const router = useRouter();
+  const navigate = useNavigation();
+
   useEffect(() => {
-    const fetchProfile = async () => {
-      setIsLoading(true);
-      try {
-        const res = await getProfileInfo();
-        setProfile(res?.data[0]);
-        await AsyncStorage.setItem('profilename', res?.data[0].name);
-        
-      } catch (error) {
-        console.error('Failed to fetch profile:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
 
-  // Load user pin and biometric setting from AsyncStorage
-    const fetchUserData = async () => {
-      try {
-        const storedPin = await AsyncStorage.getItem('userPin');
-        setUserPin(storedPin);
-
-        const biometric = await AsyncStorage.getItem('userBiometric');
-        setBiometricEnabled(biometric === 'true');
-      } catch (error) {
-        console.error('Error loading user data:', error);
-      }
+    const fetchUserPin = async () => {
+      const storedPin = await AsyncStorage.getItem('userPin');
+      setUserPin(storedPin);
     };
-    fetchUserData();
-    fetchProfile();
+    fetchUserPin();
   }, []);
 
-  const handleBackPress = () => navigation.goBack();
+  useEffect(() => {
+  const fetchFingerprintPreference = async () => {
+    const stored = await AsyncStorage.getItem('useFingerprint');
+    if (stored !== null) {
+      const value = stored === 'true';
+      setUseFingerprint(value);
+    }
+  };
+  fetchFingerprintPreference();
+}, []);
+
+
+const handleSwitchToggle = (newValue) => {
+  setPendingValue(newValue); // Store intended value
+  setModalVisible(true);     // Show confirmation modal
+};
+
+  const handleConfirm = async () => {
+  setUseFingerprint(pendingValue);
+  await AsyncStorage.setItem('useFingerprint', pendingValue.toString());
+  setModalVisible(false);
+  setPendingValue(null);
+};
+
+// Called when user cancels in modal
+const handleCancel = () => {
+  setModalVisible(false);
+  setPendingValue(null);
+};
+
+
   const handlePressPassword = () => router.push({ pathname: 'ResetPassword' });
   const handleQRPress = () => setIsModalVisible(true);
   const handleCloseModal = () => setIsModalVisible(false);
-
-    const handleBiometricToggle = (value) => {
-    setPendingBiometricValue(value); // Store the intended toggle value
-    setIsBiometricModalVisible(true); // Show confirmation modal
-  };
-
-    // Confirm biometric toggle
-  const confirmBiometricToggle = async () => {
-    try {
-      setBiometricEnabled(pendingBiometricValue);
-      if (pendingBiometricValue) {
-        await AsyncStorage.setItem('userBiometric', 'true');
-      } else {
-        await AsyncStorage.removeItem('userBiometric');
-      }
-    } catch (error) {
-      console.error('Error updating biometric setting:', error);
-      setBiometricEnabled(!pendingBiometricValue); // Revert on error
-      setError({ visible: true, message: 'Failed to update biometric setting' });
-    } finally {
-      setIsBiometricModalVisible(false);
-      setPendingBiometricValue(null);
-    }
-  };
-
-  // Cancel biometric toggle
-  const cancelBiometricToggle = () => {
-    setIsBiometricModalVisible(false);
-    setPendingBiometricValue(null);
-  };
 
   const formatDate = (dateString) => {
     if (!dateString) return 'Not available';
@@ -108,39 +85,50 @@ const ProfileScreen = () => {
     return require('../../assets/images/default-profile.jpg'); // Make sure you have this asset
   };
 
-  // console.log("Profile==",profile)
-
+  
   return (
     <>
-      <HeaderComponent headerTitle="Employee Profile" onBackPress={handleBackPress} />
+      <HeaderComponent headerTitle="Employee Profile" onBackPress={()=> navigate.goBack()} />
       {isLoading ? (
         <Loader visible={isLoading} />
       ) : (
-        <ScrollView
-          contentContainerStyle={styles.container}
-          showsHorizontalScrollIndicator={false}
-          showsVerticalScrollIndicator={false}
-        >
+        <ScrollView contentContainerStyle={styles.container}>
           {/* Profile Header */}
           <View style={styles.profileHeader}>
-            <View style={styles.avatarContainer}>
+            <TouchableOpacity 
+              style={styles.avatarContainer}
+              onPress={handleQRPress}>
               <Image
                 source={profile?.image ? { uri: profile.image } : require('../../assets/images/default-profile.jpg')}
                 style={styles.profileImage}
+                onPress={handleQRPress}
                 onError={handleImageError}
                 defaultSource={require('../../assets/images/default-profile.jpg')}
               />
-            </View>
+            </TouchableOpacity>
             <View style={styles.profileTitle}>
               <Text style={styles.userName}>{profile?.name || 'Employee Name'}</Text>
               <Text style={styles.userPosition}>{profile?.grade_name || 'Position'}</Text>
             </View>
           </View>
 
-          {/* QR Button */}
-          <TouchableOpacity style={styles.qrButton} onPress={handleQRPress}>
-            <MaterialIcons name="qr-code" size={24} color="#2c3e50" />
-          </TouchableOpacity>
+          {/* Action Buttons in Top Right */}
+          <View style={styles.actionButtonsContainer}>
+            
+            
+            <TouchableOpacity 
+              style={[styles.actionButtonSmall, styles.editButton]}
+              onPress={handlePressPassword}>
+              <MaterialIcons name="lock" size={20} color="#3498db" />
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[styles.actionButtonSmall, styles.logoutButton]}
+              onPress={() => setIsLogoutModalVisible(true)}>
+              <MaterialIcons name="logout" size={20} color="#FF0031" />
+            </TouchableOpacity>
+          </View>
+
 
           {/* Employee Details Section */}
           <View style={styles.section}>
@@ -149,18 +137,19 @@ const ProfileScreen = () => {
             <InfoRow 
               icon="badge" 
               label="Employee ID" 
-              value={profile?.emp_id} 
+              value={profile?.emp_id || 'EMP-007'} 
             />
             <InfoRow 
               icon="business" 
               label="Department" 
-              value={profile?.department_name} 
+              value={profile?.department_name || 'BLR OFFICE'} 
             />
+            {profile?.date_of_join && 
             <InfoRow 
               icon="date-range" 
               label="Date of Joining" 
               value={formatDate(profile?.date_of_join)} 
-            />
+            />}
 
           </View>
 
@@ -171,13 +160,13 @@ const ProfileScreen = () => {
             <InfoRow 
               icon="mail" 
               label="Email" 
-              value={profile?.email_id} 
+              value={profile?.email_id || 'mail@gmail.com'} 
             />
-            <InfoRow 
+            {profile?.mobile_number && <InfoRow 
               icon="phone" 
               label="Mobile" 
-              value={profile?.mobile_number || 'Not available'} 
-            />
+              value={profile?.mobile_number} 
+            />}
           </View>
 
           {/* Leave Information */}
@@ -185,33 +174,31 @@ const ProfileScreen = () => {
             <Text style={styles.sectionHeader}>LEAVE INFORMATION</Text>
             <InfoRow 
               icon="event-available" 
-              label="Available Leaves" 
-              value={profile?.max_no_leave} 
+              label="Total Leaves" 
+              value={profile?.max_no_leave || 17} 
             />
+          </View>
+          {/* Bio Matric switch */}
+
+          <View style={styles.section}>
+            <Text style={styles.sectionHeader}>SECURITY SETTINGS</Text>
+            <View style={styles.switchRow}>
+              <MaterialIcons name="fingerprint" size={20} color="#4A6FA5" style={styles.infoIcon} />
+              <View style={styles.switchLabelContainer}>
+                <Text style={styles.bioLabel}>Use Fingerprint for Login</Text>
+              </View>
+              <Switch
+                value={useFingerprint}
+                onValueChange={handleSwitchToggle}
+                trackColor={{ false: "#eee", true: "#4A6FA5" }}
+                thumbColor={useFingerprint ? "#fff" : "#FFFFFF"}
+              />
+
+            </View>
           </View>
 
           {/* Action Buttons */}
-
-            <View style={styles.optionItem}>
-              <View style={styles.optionIconContainer}>
-                <MaterialIcons name="fingerprint" size={22} color="#4A6FA5" />
-              </View>
-              <View style={styles.optionTextContainer}>
-                <Text style={styles.optionText}>Biometric Authentication</Text>
-                <Text style={styles.optionDescription}>
-                  Use fingerprint to log in
-                </Text>
-              </View>
-              <Switch
-                value={biometricEnabled}
-                onValueChange={handleBiometricToggle}
-                trackColor={{ false: "#eee", true: "#4A6FA5" }}
-                thumbColor={biometricEnabled ? "#fff" : "#FFFFFF"}
-              />
-            </View>
-
           <View style={styles.actionContainer}>
-
             <TouchableOpacity 
               style={[styles.actionButton, styles.primaryButton]}
               onPress={handlePressPassword}
@@ -222,38 +209,45 @@ const ProfileScreen = () => {
             
             <TouchableOpacity 
               style={[styles.actionButton, styles.secondaryButton]}
-              onPress={async () => {
-                // await AsyncStorage.removeItem('userPin');
-                await AsyncStorage.removeItem('authToken');
-                logout();
-              }}
+              onPress={() => setIsLogoutModalVisible(true)}
             >
               <MaterialIcons name="logout" size={20} color="#e74c3c" />
               <Text style={[styles.buttonText, styles.logoutText]}>LOGOUT</Text>
             </TouchableOpacity>
           </View>
-
-            <View style={styles.fixedFooter}>
-              <Text>Version Code: {appVersion}</Text>
-            </View>
+          <View style={styles.versionContainer}>
+          <Text style={styles.versionText}>
+            App Version: {appVersion}
+          </Text>
+        </View>
 
           {/* QR Modal */}
           <QRModal
             isVisible={isModalVisible}
             onClose={handleCloseModal}
-            qrValue={profile?.emp_id || 'EMP-007'}
+            qrValue={profile?.emp_id || 'EMP-000'}
           />
 
           <ConfirmationModal
-        visible={isBiometricModalVisible}
-        message={`Are you sure you want to ${
-          pendingBiometricValue ? 'enable' : 'disable'
-        } biometric authentication?`}
-        onConfirm={confirmBiometricToggle}
-        onCancel={cancelBiometricToggle}
-        confirmText={pendingBiometricValue ? 'Enable' : 'Disable'}
-        cancelText="Cancel"
-      />
+            visible={isLogoutModalVisible}
+            message="Are you sure you want to logout?"
+            onConfirm={() => {
+              setIsLogoutModalVisible(false);
+              logout();
+            }}
+            onCancel={() => setIsLogoutModalVisible(false)}
+            confirmText="Logout"
+            cancelText="Cancel"
+          />
+
+          <ConfirmationModal
+            visible={modalVisible}
+            message="Are you sure you want to change this setting?"
+            onConfirm={handleConfirm}
+            onCancel={handleCancel}
+          />
+
+
         </ScrollView>
       )}
     </>
@@ -329,6 +323,33 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  actionButtonsContainer: {
+    position: 'absolute',
+    top: 30,
+    right: 20,
+  },
+  actionButtonSmall: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  qrButton: {
+    backgroundColor: '#F5EEFF',
+  },
+  editButton: {
+    backgroundColor: '#E8F5FD',
+  },
+  logoutButton: {
+    backgroundColor: '#FBE6EA',
+  },
   section: {
     backgroundColor: '#fff',
     borderRadius: 0,
@@ -361,14 +382,32 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 13,
-    color: '#95a5a6',
+    color: '#353535',
     marginBottom: 3,
+  },
+  bioLabel: {
+    fontSize: 13,
+    color: '#353535',
+    marginBottom: 3,
+    fontWeight: '500',
   },
   infoValue: {
     fontSize: 16,
     color: '#34495e',
     fontWeight: '500',
   },
+
+  switchRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  paddingVertical: 10,
+},
+switchLabelContainer: {
+  flex: 1,
+  marginLeft: 15,
+},
+
   actionContainer: {
     padding: 20,
   },
@@ -397,59 +436,16 @@ const styles = StyleSheet.create({
   logoutText: {
     color: '#e74c3c',
   },
-
-   optionItem: {
-    flexDirection: 'row',
+   versionContainer: {
+    padding: 5,
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    backgroundColor: "#FFFFFF"
-  },
-  optionIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#FFFFFF" ,
     justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
   },
-  optionTextContainer: {
-    flex: 1,
-  },
-  optionText: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: "#000",
-  },
-  optionDescription: {
+  versionText: {
     fontSize: 12,
     color: '#95a5a6',
-    marginTop: 2,
   },
-  optionDivider: {
-    height: 1,
-    // backgroundColor: colors.muted,
-    marginLeft: 68,
-  },
-    fixedFooter: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: scaleHeight(10),
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-    backgroundColor: '#fff',
-    width: '100%',
-  },
-  footerText: {
-    color: "#333",
-    fontSize: scaleWidth(14),
-    fontWeight: '500',
-  }
+  
 });
 
 export default ProfileScreen;

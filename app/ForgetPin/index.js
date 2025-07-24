@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import styled from 'styled-components/native';
-import { View, TextInput, TouchableOpacity, ActivityIndicator, StyleSheet, StatusBar, SafeAreaView, 
-  ScrollView, Dimensions, Image, Text, Alert, Keyboard, Platform } from 'react-native';
+import { View, TouchableOpacity, ActivityIndicator, StyleSheet, StatusBar, SafeAreaView, 
+  ScrollView, Dimensions, Text, Alert, Keyboard, Platform } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Logos from '../../assets/images/Atom_walk_logo.jpg';
@@ -9,11 +9,11 @@ import { useRouter } from 'expo-router';
 import { getDBListInfo } from '../../src/services/authServices';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CompanyDropdown from '../../src/components/ComanyDropDown';
-// import Loader from '../../src/components/old_components/Loader';
 import Icon from 'react-native-vector-icons/Ionicons'; 
 import { forgetUserPinView } from '../../src/services/productServices';
 import SuccessModal from '../../src/components/SuccessModal';
 import Loader from '../../src/components/Loader';
+import { AppContext } from '../../context/AppContext';
 
 const { width, height } = Dimensions.get('window');
 
@@ -30,8 +30,9 @@ const ResetPinScreen = () => {
   const [dbList, setDbList] = useState([]);
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
-const [successMessage, setSuccessMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState("");
+  const {completLogout} = useContext(AppContext);
 
   useEffect(() => {
     fetchDbList();
@@ -109,7 +110,7 @@ const [successMessage, setSuccessMessage] = useState('');
     
     if (response && response.status === 200) {
       // Clear userPin from AsyncStorage on success
-      // await AsyncStorage.removeItem('userPin');
+      await AsyncStorage.removeItem('userPin');
       
       // Set success message and show modal
       setSuccessMessage(
@@ -119,11 +120,13 @@ const [successMessage, setSuccessMessage] = useState('');
       setIsSuccessModalVisible(true);
 
       setTimeout(() => {
-         router.replace({
-           pathname: "AuthScreen",
-           params: { backTohome: "true" }
-         });
+        //  router.replace({
+        //    pathname: "AuthScreen",
+        //    params: { backTohome: "true" }
+        //  });
+        completLogout();
        }, 3000);
+       
     } else {
       throw new Error(response?.data?.message || 'Failed to process your request');
     }
@@ -237,7 +240,7 @@ const [successMessage, setSuccessMessage] = useState('');
         visible={isSuccessModalVisible}
         onClose={() => {
           setIsSuccessModalVisible(false);
-          router.back(); // Changed from replace('/login') to back()
+          completLogout(); // Changed from replace('/login') to back()
         }}
         message={successMessage}
       />
