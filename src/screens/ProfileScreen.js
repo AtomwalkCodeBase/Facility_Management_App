@@ -125,16 +125,16 @@ const ProfileScreen = () => {
           </View>
 
           {/* QR Button */}
-           <View style={styles.actionButtonsContainer}>
-          <TouchableOpacity style={styles.qrButton} onPress={handleQRPress}>
-            <MaterialIcons name="qr-code" size={24} color="#2c3e50" />
-          </TouchableOpacity>
-          <TouchableOpacity
+            <View style={styles.actionButtonsContainer}>
+              <TouchableOpacity style={styles.qrButton} onPress={handleQRPress}>
+                <MaterialIcons name="qr-code" size={24} color="#2c3e50" />
+              </TouchableOpacity>
+              <TouchableOpacity
                 style={[styles.qrButton, styles.logoutButton]}
                 onPress={() => setIsLogoutModalVisible(true)}>
-                <MaterialIcons name="logout" size={24} color="#FF0031" />
+                <MaterialCommunityIcons name="exit-run" size={24} color="#FF0031" />
               </TouchableOpacity>
-              </View>
+            </View>
 
           {/* Employee Details Section */}
           <View style={styles.section}>
@@ -218,7 +218,7 @@ const ProfileScreen = () => {
               style={[styles.actionButton, styles.secondaryButton]}
               onPress={() => setIsLogoutModalVisible(true)}
             >
-              <MaterialIcons name="logout" size={20} color="#e74c3c" />
+              <MaterialCommunityIcons name="exit-run" size={20} color="#e74c3c" />
               <Text style={[styles.buttonText, styles.logoutText]}>LOGOUT</Text>
             </TouchableOpacity>
           </View>
