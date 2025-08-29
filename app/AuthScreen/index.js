@@ -1,653 +1,695 @@
-import React, { useContext, useEffect, useState } from 'react';
-import styled from 'styled-components/native';
-import {
-  View, TouchableOpacity, StyleSheet, Keyboard, StatusBar, SafeAreaView,
-  Platform, ScrollView, Dimensions, Image, Text
-} from 'react-native';
-import { MaterialIcons, Entypo } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import Logos from '../../assets/images/Atom_walk_logo.jpg';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { getDBListInfo } from '../../src/services/authServices';
+import React, { useContext, useRef, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import CompanyDropdown from '../../src/components/ComanyDropDown';
+import { useRouter } from "expo-router";
+import NetInfo from '@react-native-community/netinfo';
+import {
+    View,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    StyleSheet,
+    Alert,
+    ImageBackground,
+    Dimensions,
+    StatusBar,
+    Image,
+    SafeAreaView,
+    ScrollView
+} from 'react-native';
+import * as LocalAuthentication from 'expo-local-authentication';
+import Logos from '../../assets/images/Atom_walk_logo.jpg'
+import Icon from 'react-native-vector-icons/Ionicons'; 
 import { AppContext } from '../../context/AppContext';
 import Loader from '../../src/components/Loader';
+import ErrorModal from '../../src/components/ErrorModal';
+import { LinearGradient } from 'expo-linear-gradient';
+import ConfirmationModal from '../../src/components/ConfirmationModal';
 import Constants from 'expo-constants';
-
-
+import { Ionicons } from '@expo/vector-icons';
 
 const { width, height } = Dimensions.get('window');
 
-// Responsive scaling functions
 const scaleWidth = (size) => (width / 375) * size;
 const scaleHeight = (size) => (height / 812) * size;
 
+const AuthScreen = () => {
+    const {
+        completLogout,
+        login,
+        refreshProfileData,
+        isLoading,
+        errorMessage: contextErrorMessage,
+        setErrorMessage
+    } = useContext(AppContext);
 
-const LoginScreen = () => {
-  const { login, errorMessage: contextErrorMessage, setErrorMessage } = useContext(AppContext);
-  const { backTohome } = useLocalSearchParams();
-  const router = useRouter();
-  const [mobileNumberOrEmpId, setMobileNumberOrEmpId] = useState('');
-  const [profileName, setProfileName] = useState('');
-  const [pin, setPin] = useState('');
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const [userPin, setUserPin] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [companyError, setCompanyError] = useState('');
-  const [keyboardStatus, setKeyboardStatus] = useState(false);
-  const [dbList, setDbList] = useState([]);
-  const isLoginDisabled = !mobileNumberOrEmpId || !pin;
-  const [selectedCompany, setSelectedCompany] = useState(null);
-  const [bioStatus, setBioStatus] = useState(false);
+    const router = useRouter();
+    const [value, setValue] = useState('');
+    const [attemptsRemaining, setAttemptsRemaining] = useState(5);
+    const [isNetworkError, setIsNetworkError] = useState(false);
+    const [userName, setUserName] = useState('');
+    const [DbName, setDbName] = useState('');
+    const [showBiomatricOption, setShowBiomatricOption] = useState(false);
+    const [showPinInput, setShowPinInput] = useState(!showBiomatricOption);
+    const [showFingerprint, setShowFingerprint] = useState(false);
+    const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
+    const [hasFailedAttempt, setHasFailedAttempt] = useState(false);
+    const appVersion = Constants.expoConfig?.version || '1.0.0';
+    const maxAttempts = 5;
 
-  const appVersion = Constants.expoConfig?.version || '0.0.1';
+    useEffect(() => {
+        const loadName = async () => {
+            const name = await AsyncStorage.getItem('profilename');
+            if (name) setUserName(name);
+            const DBName = await AsyncStorage.getItem('dbName');
+            if (DBName) setDbName(DBName);
+        };
+        loadName();
 
-  useEffect(() => {
-    const initializeApp = async () => {
-      try {
-        // Load saved empId
-        const savedEmpId = await AsyncStorage.getItem('empId');
-        if (savedEmpId) {
-          setMobileNumberOrEmpId(savedEmpId);
+        const getBioMatricS = async () => {
+            const bioStatus = await AsyncStorage.getItem('userBiometric');
+            setShowBiomatricOption(bioStatus === 'true');
+            setShowPinInput(bioStatus !== 'true');
+        };
+        getBioMatricS();
+    }, []);
+
+    const checkNetworkAndAuthenticate = async () => {
+        const netInfo = await NetInfo.fetch();
+        if (!netInfo.isConnected) {
+            setIsNetworkError(true);
+            return;
         }
-
-        // Load profile name
-        const storedName = await AsyncStorage.getItem('profilename');
-        if (storedName) {
-          setProfileName(storedName);
-        } else {
-          const profileData = await AsyncStorage.getItem('profile');
-          if (profileData) {
-            const parsedProfile = JSON.parse(profileData);
-            setProfileName(parsedProfile?.name || 'Employee');
-          }
-        }
-
-        // Load fingerprint status
-        const fingerprintStatus = await AsyncStorage.getItem('useFingerprint');
-        setBioStatus(fingerprintStatus === 'true');
-
-        // Load stored user PIN
-        const storedPin = await AsyncStorage.getItem('userPin');
-        setUserPin(storedPin);
-
-        // Fetch DB name
-        fetchDbName();
-      } catch (error) {
-        console.error('Error initializing app:', error);
-      }
+        handleBiometricAuthentication();
     };
 
-    // Keyboard event listeners
-    const keyboardDidShowListener = Keyboard.addListener(
-      'keyboardDidShow',
-      () => setKeyboardStatus(true)
-    );
-    const keyboardDidHideListener = Keyboard.addListener(
-      'keyboardDidHide',
-      () => setKeyboardStatus(false)
-    );
-
-    // Call initialization function
-    initializeApp();
-
-    // Cleanup
-    return () => {
-      keyboardDidShowListener.remove();
-      keyboardDidHideListener.remove();
+    const handleMPINChange = (text) => {
+        setValue(text);
+        // Clear error messages and reset attempts when user starts typing
+        if (hasFailedAttempt || contextErrorMessage) {
+            setHasFailedAttempt(false);
+            setErrorMessage('');
+            setAttemptsRemaining(maxAttempts); // Reset attempts
+        }
     };
-  }, []);
 
+    const handleMPINSubmit = async () => {
+        const netInfo = await NetInfo.fetch();
+        if (!netInfo.isConnected) {
+            setIsNetworkError(true);
+            return;
+        }
 
+        // Clear any previous errors
+        setErrorMessage('');
 
-  const fetchDbName = async () => {
-    setLoading(true); // Add loading state at start
-    try {
-      const DBData = await getDBListInfo();
-      setDbList(DBData.data || []);
-
-      // Load both current and previous dbNames
-      const savedDBName = await AsyncStorage.getItem('dbName');
-
-      const matchingCompany = DBData.data.find(company => {
-        const companyDbName = company.name.replace(/^SD_/, '');
-        return companyDbName === savedDBName;
-      });
-
-      if (matchingCompany) {
-        setSelectedCompany({
-          label: matchingCompany.ref_cust_name,
-          value: matchingCompany.ref_cust_name
-        });
-      } else if (DBData.data?.length === 1) {
-        const firstCompany = DBData.data[0];
-        const defaultDbName = firstCompany.name.replace(/^SD_/, '');
-
-        setSelectedCompany({
-          label: firstCompany.ref_cust_name,
-          value: firstCompany.ref_cust_name
-        });
-        await AsyncStorage.multiSet([
-          ['dbName', defaultDbName],
-          ['previousDbName', defaultDbName]
+        const correctMPIN = await AsyncStorage.getItem('userPin');
+        const finalUsername = await AsyncStorage.getItem('empId');
+        const [token, expirationDateString] = await Promise.all([
+            AsyncStorage.getItem('userToken'),
+            AsyncStorage.getItem('tokenExpiration')
         ]);
-      }
-    } catch (error) {
-      console.error('DB List loading error:', error);
-    } finally {
-      setLoading(false); // Ensure loading is set to false when done
-    }
-  };
 
-  const handleCompanyChange = async (item) => {
-    if (!item) return;
+        if (value === correctMPIN) {
+            try {
+                setHasFailedAttempt(false);
+                if (token && expirationDateString) {
+                    const expirationDate = new Date(expirationDateString);
+                    const now = new Date();
 
-    setSelectedCompany(item);
-
-
-
-
-    setCompanyError('');
-  };
-
-
-  const validateInput = () => {
-    if (!selectedCompany) {
-      setCompanyError('Please select your company');
-      setLoading(false);
-      return false;
-    }
-    if (!mobileNumberOrEmpId) {
-      setErrorMessage('Mobile number or Employee ID is required');
-      setLoading(false);
-      return false;
-    }
-    if (!pin) {
-      setErrorMessage('PIN is required');
-      setLoading(false);
-      return false;
-    }
-    if (pin.length < 4) {
-      setErrorMessage('PIN must be at least 4 characters long');
-      setLoading(false);
-      return false;
-    }
-    setErrorMessage('');
-    return true;
-  };
-
-  const handlePressPassword = async () => {
-    try {
-      const prevDbName = await AsyncStorage.getItem('previousDbName');
-
-      if (prevDbName) {
-        await AsyncStorage.setItem('dbName', prevDbName);
-      }
-
-      router.push({ pathname: 'PinScreen' });
-    } catch (error) {
-      console.error('Error handling PIN/fingerprint login:', error);
-    }
-  };
-
-  const handlePressForget = () => {
-    router.push({
-      pathname: 'ForgetPin',
-    });
-  };
-
-  useEffect(() => {
-    const logCurrentDbName = async () => {
+                    if (now > expirationDate) {
+                        await login(finalUsername, value, DbName);
+                    } else {
+                        await refreshProfileData();
+                    }
+                } else {
+                    await login(finalUsername, value, DbName);
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                setHasFailedAttempt(true);
+            }
+        } else {
+            const remaining = attemptsRemaining - 1;
+            setAttemptsRemaining(remaining);
+            setHasFailedAttempt(true);
+        }
     };
-    logCurrentDbName();
-  }, [selectedCompany]);
 
-  const handlePress = async () => {
-    setLoading(true);
-    setErrorMessage(''); // Clear any previous errors
+    const handleBiometricAuthentication = async () => {
+        const finalUsername = await AsyncStorage.getItem('empId');
+        const userPassword = await AsyncStorage.getItem('userPin');
+        const [token, expirationDateString] = await Promise.all([
+            AsyncStorage.getItem('userToken'),
+            AsyncStorage.getItem('tokenExpiration')
+        ]);
 
-    if (!validateInput()) {
-      setLoading(false);
-      return;
-    }
+        try {
+            const biometricAuth = await LocalAuthentication.authenticateAsync({
+                promptMessage: 'Authenticate to login',
+                fallbackLabel: 'Use PIN instead',
+            });
 
-    try {
-      // Get the dbname from the selected company
-      const selected = dbList.find(c => c.ref_cust_name === selectedCompany.value);
-      if (!selected) {
-        setErrorMessage('Invalid company selection');
-        setLoading(false);
-        return;
-      }
+            if (biometricAuth.success) {
+                if (token && expirationDateString) {
+                    const expirationDate = new Date(expirationDateString);
+                    const now = new Date();
 
-      const dbName = selected.name.replace(/^SD_/, '');
+                    if (now > expirationDate) {
+                        // Token expired, perform fresh login which will fetch profile data
+                        await login(finalUsername, userPassword, DbName);
+                    } else {
+                        // Token still valid, explicitly refresh profile data before navigation
+                        await refreshProfileData();
+                    }
+                } else {
+                    // No token found, perform fresh login
+                    await login(finalUsername, userPassword, DbName);
+                }
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
 
-      // Call the login function with just the dbName
-      await login(mobileNumberOrEmpId, pin, dbName);
+    const handlePressForget = () => {
+        router.push({
+            pathname: 'ForgetPin',
+        });
+    };
 
-    } catch (error) {
-      console.error('Login error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <SafeAreaContainer>
-      <StatusBar barStyle="light-content" backgroundColor="#4A6FA5" />
-      <Container>
-        <Header style={styles.headerContainer}>
-          <LinearGradient
-            colors={["#4A6FA5", "#6B8CBE"]} 
-            start={[0.5, 0]} 
-            end={[0.5, 1]}
-            style={styles.headerGradient}
-          >
-            <View style={styles.headerTop}>
-              <View style={styles.logoContainer}>
-                {Logos ? (
-                  <Image source={Logos} style={styles.logo} />
-                ) : (
-                  <View style={styles.companyPlaceholder}>
-                    <MaterialIcons
-                      name="business"
-                      size={scaleWidth(40)}
-                      color="#fff"
-                    />
-                  </View>
+    return (
+        <SafeAreaView style={styles.container}>
+            <StatusBar backgroundColor="#4A6FA5" barStyle="light-content" />
+            
+            {/* Bank Logo Area */}
+            <LinearGradient
+                colors={['#4A6FA5', '#6B8CBE']}
+                style={styles.header}
+            >
+                <View style={styles.logoContainer}>
+                    {Logos ? (
+                        <Image source={Logos} style={styles.logo} />
+                    ) : (
+                        <View style={styles.companyPlaceholder}>
+                            <Ionicons name="business" size={scaleWidth(40)} color="#fff" />
+                        </View>
+                    )}
+                </View>
+                <Text style={styles.welcomeText}>Welcome to ATOMWALK HRM</Text>
+                {userName && (
+                    <View style={styles.userInfoContainer}>
+                        <Ionicons name="person-circle-outline" size={24} color="#fff" />
+                        <Text style={styles.userName}>{userName}</Text>
+                    </View>
                 )}
-              </View>
-              {profileName && (
-                <WelcomeContainer>
-                  <GreetingText>Welcome back,</GreetingText>
-                  <UserNameText>{profileName}</UserNameText>
-                </WelcomeContainer>
-              )}
-            </View>
-          </LinearGradient>
-        </Header>
-        <MainContent keyboardStatus={keyboardStatus}>
-          <ScrollView
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-          >
-            <Content>
-              <Card>
-                <Title>Login</Title>
+            </LinearGradient>
 
-                <InputContainer>
-                  {dbList.length > 0 && (
-                    <CompanyDropdown
-                      label="Company"
-                      data={dbList.map((company) => ({
-                        label: company.ref_cust_name,
-                        value: company.ref_cust_name,
-                      }))}
-                      value={selectedCompany}
-                      setValue={handleCompanyChange}
-                      error={companyError}
-                    />
-                  )}
+            <Loader visible={isLoading} />
 
-                  <InputLabel>Enter your Mobile number or Emp ID</InputLabel>
-                  <InputWrapper>
-                    <MaterialIcons name="person" size={20} color="#6c757d" />
-                    <Input
-                      placeholder="Mobile number or Emp ID"
-                      value={mobileNumberOrEmpId}
-                      onChangeText={(text) =>
-                        setMobileNumberOrEmpId(text.replace(/\s/g, ""))
-                      } // This removes all spaces
-                      keyboardType="default"
-                      placeholderTextColor="#6c757d"
-                      maxLength={15}
-                    />
-                  </InputWrapper>
-                  <InputLabel>Enter your PIN (min 4 digits)</InputLabel>
-                  <InputWrapper>
-                    <MaterialIcons
-                      name="lock-outline"
-                      size={20}
-                      color="#6c757d"
-                    />
-                    <Input
-                      placeholder="PIN (min 4 digits)"
-                      value={pin}
-                      onChangeText={setPin}
-                      secureTextEntry={!isPasswordVisible}
-                      keyboardType="numeric"
-                      placeholderTextColor="#6c757d"
-                      maxLength={6} // Increased max length but validation still requires min 4
-                    />
-                    <TouchableOpacity
-                      onPress={() => setIsPasswordVisible(!isPasswordVisible)}
-                    >
-                      <MaterialIcons
-                        name={
-                          isPasswordVisible ? "visibility" : "visibility-off"
-                        }
-                        size={20}
-                        color="#6c757d"
-                      />
-                    </TouchableOpacity>
-                  </InputWrapper>
+            <ScrollView style={styles.contentContainer} showsVerticalScrollIndicator={false}>
+                {!showPinInput && !showFingerprint ? (
+                    <View style={styles.card}>
+                        <Text style={styles.loginOptionsText}>Login Options</Text>
+                        <TouchableOpacity
+                            style={styles.authButton}
+                            onPress={() => setShowPinInput(true)}
+                        >
+                            <View style={styles.authButtonIconContainer}>
+                                <Icon name="lock-closed-outline" size={22} color="#fff" />
+                            </View>
+                            <Text style={styles.authButtonText}>Login with PIN</Text>
+                            <Icon name="chevron-forward-outline" size={20} color="#777" style={styles.authButtonArrow} />
+                        </TouchableOpacity>
 
-                  {contextErrorMessage ? <ErrorText>{contextErrorMessage}</ErrorText> : null}
-
-                  <LoginButton
-                    onPress={handlePress}
-                    disabled={isLoginDisabled}
-                    style={{
-                      backgroundColor: isLoginDisabled ? "#fff" : "#007AFF",
-                    }}
-                  >
-                    <LoginButtonText
-                      style={{ color: isLoginDisabled ? "#454545" : "#fff" }}
-                    >
-                      LOGIN
-                    </LoginButtonText>
-                  </LoginButton>
-                </InputContainer>
-              </Card>
-
-              {!backTohome && (
-                <>
-                  {userPin && bioStatus && (
-                    <AlternativeLogin onPress={handlePressPassword}>
-                      <FingerprintIcon>
-                        <Entypo
-                          name="fingerprint"
-                          size={scaleWidth(24)}
-                          color="#fff"
+                        {showBiomatricOption && (
+                            <TouchableOpacity
+                                style={styles.authButton}
+                                onPress={() => {
+                                    setShowFingerprint(true);
+                                    checkNetworkAndAuthenticate();
+                                }}
+                            >
+                                <View style={styles.authButtonIconContainer}>
+                                    <Icon name="finger-print-outline" size={22} color="#fff" />
+                                </View>
+                                <Text style={styles.authButtonText}>Login with Fingerprint</Text>
+                                <Icon name="chevron-forward-outline" size={20} color="#777" style={styles.authButtonArrow} />
+                            </TouchableOpacity>
+                        )}
+                        <TouchableOpacity
+                            onPress={() => setIsLogoutModalVisible(true)}
+                            style={styles.forgotContainer}
+                        >
+                            <Ionicons name="log-out-outline" size={16} color="#4A6FA5" />
+                            <Text style={styles.forgotText}>Change Active User</Text>
+                        </TouchableOpacity>
+                    </View>
+                ) : showPinInput ? (
+                    <View style={styles.card}>
+                        <Text style={styles.title}>Enter your 4-digit PIN</Text>
+                        <TextInput
+                            style={[styles.input, { height: 50, width: '100%', backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 10 }]}
+                            placeholder="Enter your PIN"
+                            secureTextEntry
+                            keyboardType="numeric"
+                            maxLength={6}
+                            value={value}
+                            onChangeText={handleMPINChange}
+                            placeholderTextColor="#888"
                         />
-                      </FingerprintIcon>
-                      <AlternativeLoginText>
-                        Login with PIN/Fingerprint
-                      </AlternativeLoginText>
-                    </AlternativeLogin>
-                  )}
 
-                  <TouchableOpacity
-                    onPress={handlePressForget}
-                    style={styles.forgetPinButton}
-                  >
-                    <Text style={styles.forgetPinText}>Forgot PIN?</Text>
-                  </TouchableOpacity>
-                </>
-              )}
-            </Content>
-          </ScrollView>
-        </MainContent>
+                        {/* {contextErrorMessage && (
+                            <View style={styles.errorContainer}>
+                                <Icon name="alert-circle-outline" size={16} color="#E02020" />
+                                <Text style={styles.errorText}>
+                                    {contextErrorMessage}
+                                </Text>
+                            </View>
+                        )} */}
 
-        <Footer style={styles.fixedFooter}>
-          <FooterText>Version Code: {appVersion}</FooterText>
-        </Footer>
-      </Container>
-      {/* </KeyboardAvoidingView> */}
-      <Loader
-        visible={loading}
-        onTimeout={() => {
-          setLoading(false); // Hide loader
-          Alert.alert("Timeout", "Not able to Login.");
-        }}
-      />
-      </SafeAreaContainer>
-  );
+                        {(hasFailedAttempt || contextErrorMessage) && (
+                            <View style={styles.errorContainer}>
+                                <Ionicons name="alert-circle-outline" size={16} color="#E02020" />
+                                <Text style={styles.errorText}>
+                                    {contextErrorMessage || "Incorrect PIN. Please Try Again."}
+                                </Text>
+                            </View>
+                        )}
+
+                        {/* {attemptsRemaining < maxAttempts && !contextErrorMessage && (
+                            <View style={styles.errorContainer}>
+                                <Icon name="alert-circle-outline" size={16} color="#E02020" />
+                                <Text style={styles.errorText}>
+                                    Incorrect PIN. Please Try Again.
+                                </Text>
+                            </View>
+                        )} */}
+
+                        <TouchableOpacity
+                            style={[
+                                styles.submitButton,
+                                value.length < 4 && {
+                                    backgroundColor: '#fff',
+                                    borderColor: '#4d88ff',
+                                    borderWidth: 1,
+                                    shadowColor: 'transparent',
+                                    elevation: 0,
+                                }
+                            ]}
+                            onPress={handleMPINSubmit}
+                            disabled={value.length < 4}
+                        >
+                            <Text style={[
+                                styles.submitButtonText,
+                                value.length < 4 && { color: '#666' }
+                            ]}>
+                                LOGIN
+                            </Text>
+                        </TouchableOpacity>
+
+                        {showBiomatricOption && (
+                            <TouchableOpacity
+                                style={styles.backButton}
+                                // In the back button handlers:
+                                onPress={() => {
+                                    setShowPinInput(false);
+                                    setShowFingerprint(false);
+                                    setErrorMessage('');
+                                    setHasFailedAttempt(false);
+                                    setAttemptsRemaining(maxAttempts);
+                                }}
+                            >
+                                <Ionicons name="arrow-back-outline" size={16} color="#4A6FA5" style={styles.backIcon} />
+                                <Text style={styles.backButtonText}>Back to Login Options</Text>
+                            </TouchableOpacity>
+                        )}
+                        {!showBiomatricOption && (
+                            <TouchableOpacity
+                                onPress={() => setIsLogoutModalVisible(true)}
+                                style={styles.forgotContainer}
+                            >
+                                <Ionicons name="log-out-outline" size={16} color="#4A6FA5" />
+                                <Text style={styles.forgotText}>Change Active User</Text>
+                            </TouchableOpacity>
+                        )}
+                        <TouchableOpacity
+                            onPress={handlePressForget}
+                            style={styles.forgetPinButton}
+                        >
+                            <Text style={styles.forgetPinText}>Forgot PIN?</Text>
+                        </TouchableOpacity>
+                    </View>
+                ) : (
+                    <View style={styles.card}>
+                        <Text style={styles.title}>Fingerprint Authentication</Text>
+                        <TouchableOpacity
+                            style={styles.fingerprintIconContainer}
+                            onPress={() => {
+                                checkNetworkAndAuthenticate();
+                            }}
+                        >
+                            <Ionicons name="finger-print" size={80} color="#4A6FA5" />
+                        </TouchableOpacity>
+
+                        <Text style={styles.fingerprintHint}>
+                            Place your finger on the sensor to authenticate
+                        </Text>
+                        <TouchableOpacity
+                            style={styles.backButton}
+                            // In the back button handlers:
+                            onPress={() => {
+                                setShowPinInput(false);
+                                setShowFingerprint(false);
+                                setErrorMessage('');
+                                setHasFailedAttempt(false);
+                                setAttemptsRemaining(maxAttempts);
+                            }}
+                        >
+                            <Ionicons name="arrow-back-outline" size={16} color="#4A6FA5" style={styles.backIcon} />
+                            <Text style={styles.backButtonText}>Back to Login Options</Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
+
+                <View style={styles.securityNote}>
+                    <Ionicons name="shield-checkmark-outline" size={20} color="#FFA726" style={styles.noteIcon} />
+                    <View style={styles.noteContent}>
+                        <Text style={styles.noteTitle}>Security Notice</Text>
+                        <Text style={styles.noteText}>
+                            <Text style={styles.bulletPoint}>• </Text>
+                            Never share your PIN with anyone
+                            {'\n'}
+                            <Text style={styles.bulletPoint}>• </Text>
+                            If you've updated your PIN using web app, please logout and login again with your new PIN.
+                            {'\n'}
+                            <Text style={styles.bulletPoint}>• </Text>
+                            If you forget the Pin, Please Logout and select forget PIN option to reset.
+                        </Text>
+                    </View>
+                </View>
+
+                <View style={styles.footer}>
+                    <Text style={styles.footerText}>© 2025 ATOMWALK. All rights reserved.</Text>
+                    <Text style={styles.versionText}>
+                        Version {appVersion ? `${appVersion}` : '0.0.1'}
+                    </Text>
+                </View>
+            </ScrollView>
+
+            <ErrorModal
+                visible={isNetworkError}
+                message="No internet connection. Please check your network and try again."
+                onClose={() => setIsNetworkError(false)}
+                onRetry={checkNetworkAndAuthenticate}
+            />
+            <ConfirmationModal
+                visible={isLogoutModalVisible}
+                message="Are you sure you want to change the currently logged-in user?"
+                onConfirm={() => {
+                    setIsLogoutModalVisible(false);
+                    completLogout();
+                }}
+                onCancel={() => setIsLogoutModalVisible(false)}
+                confirmText="Confirm"
+                cancelText="Cancel"
+            />
+        </SafeAreaView>
+    );
 };
 
-// Styled Components (remain the same as in your original code)
+
+
 const styles = StyleSheet.create({
-  headerContainer: {
-    overflow: 'visible',
-    zIndex: 10,
-  },
-  headerGradient: {
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight + scaleHeight(10) : scaleHeight(10),
-    paddingHorizontal: scaleWidth(20),
-    paddingBottom: scaleHeight(20),
-    borderBottomLeftRadius: scaleWidth(30),
-    borderBottomRightRadius: scaleWidth(30),
-  },
-  headerTop: {
-    paddingVertical: scaleHeight(10),
-  },
-  companySection: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: scaleHeight(20),
-  },
-
-  logoContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 15,
-    borderRadius: scaleWidth(10),
-    overflow: 'hidden'
-},
-
-logo: {
-    width: scaleWidth(150),
-    height: scaleHeight(60),
-    borderRadius: scaleWidth(10),
-    resizeMode: 'contain',
-    backgroundColor: '#fff',
-},
-  companyPlaceholder: {
-    width: scaleWidth(80),
-    height: scaleWidth(80),
-    borderRadius: scaleWidth(40),
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  contentWrapper: {
-    flex: 1,
-    position: 'relative', // Needed for absolute positioning of footer
-  },
-  fixedFooter: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingBottom: scaleHeight(70), // Add padding to prevent content from being hidden behind footer
-  },
-  hiddenFooter: {
-    display: 'none',
-  },
-  visibleFooter: {
-    padding: scaleHeight(15),
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-    backgroundColor: '#fff',
-    width: '100%',
-  },
-
-  forgetPinButton: {
-  marginTop: scaleHeight(20),
-  alignSelf: 'center',
-  paddingVertical: scaleHeight(10),
-  paddingHorizontal: scaleWidth(20),
-},
-forgetPinText: {
-  color: '#6B8CBE',
-  fontSize: scaleWidth(16),
-  fontWeight: '500',
-  textDecorationLine: 'underline',
-},
-
+    container: {
+        flex: 1,
+        backgroundColor: '#F5F5F5',
+    },
+    header: {
+        paddingTop: 100,
+        paddingBottom: 30,
+        paddingHorizontal: 20,
+        borderBottomLeftRadius: 20,
+        borderBottomRightRadius: 20,
+    },
+    logoContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 15,
+        borderRadius: scaleWidth(10),
+        overflow: 'hidden'
+    },
+    logo: {
+        width: scaleWidth(150),
+        height: scaleHeight(60),
+        borderRadius: scaleWidth(10),
+        resizeMode: 'contain',
+        backgroundColor: '#fff',
+    },
+    logoText: {
+        color: '#F37A20',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    welcomeText: {
+        fontSize: 18,
+        color: '#fff',
+        fontWeight: '600',
+        textAlign: 'center',
+    },
+    userInfoContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 8,
+    },
+    userName: {
+        fontSize: 20,
+        color: '#fff',
+        fontWeight: 'bold',
+        marginLeft: 8,
+    },
+    contentContainer: {
+        flex: 1,
+        paddingHorizontal: 20,
+        paddingTop: 20,
+        paddingBottom: 10,
+        // justifyContent: 'space-between',
+    },
+    card: {
+        backgroundColor: '#fff',
+        borderRadius: 15,
+        padding: 25,
+        width: '100%',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+        alignItems: 'center',
+    },
+    loginOptionsText: {
+        fontSize: 16,
+        color: '#444',
+        marginBottom: 20,
+        fontWeight: '500',
+        alignSelf: 'flex-start',
+    },
+    authButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 15,
+        paddingHorizontal: 15,
+        borderRadius: 10,
+        width: '100%',
+        marginBottom: 15,
+        backgroundColor: '#FFFFFF',
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
+    },
+    authButtonIconContainer: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: '#B1C0D7',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 15,
+    },
+    authButtonText: {
+        color: '#333',
+        fontSize: 16,
+        fontWeight: '500',
+        flex: 1,
+    },
+    authButtonArrow: {
+        marginLeft: 10,
+    },
+    title: {
+        fontSize: 18,
+        fontWeight: '500',
+        marginBottom: 25,
+        color: '#333',
+        textAlign: 'center',
+    },
+    mPINContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 25,
+        width: '70%',
+    },
+    mPINInput: {
+        width: 45,
+        height: 50,
+        borderWidth: 1,
+        borderColor: '#AB74FD',
+        borderRadius: 8,
+        textAlign: 'center',
+        fontSize: 18,
+        marginHorizontal: 5,
+        backgroundColor: '#FFFFFF',
+        color: '#333',
+    },
+    mPINInputFilled: {
+        borderColor: '#AB74FD',
+        backgroundColor: '#F4ECFF',
+    },
+    errorContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    errorText: {
+        color: '#E02020',
+        marginLeft: 5,
+        fontSize: 14,
+    },
+    submitButton: {
+        backgroundColor: '#007AFF',
+        paddingVertical: 15,
+        paddingHorizontal: 50,
+        borderRadius: 8,
+        marginBottom: 15,
+        width: '100%',
+        shadowColor: '#CDADFF',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    submitButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: 'bold',
+        textAlign: 'center',
+    },
+    forgotContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 5,
+        marginTop: 10,
+    },
+    forgotText: {
+        color: '#4A6FA5',
+        marginLeft: 5,
+        fontWeight: '500',
+    },
+    fingerprintIconContainer: {
+        marginVertical: 30,
+        padding: 20,
+        backgroundColor: '#edf1f6',
+        borderRadius: 60,
+    },
+    fingerprintHint: {
+        color: '#555',
+        fontSize: 14,
+        marginBottom: 30,
+        textAlign: 'center',
+        lineHeight: 20,
+    },
+    backButton: {
+        marginTop: 10,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    backIcon: {
+        marginRight: 5,
+    },
+    backButtonText: {
+        color: '#4A6FA5',
+        fontSize: 14,
+        fontWeight: '500',
+    },
+    footer: {
+        alignItems: 'center',
+        marginTop: 20,
+        paddingVertical: 15,
+    },
+    footerText: {
+        color: '#888',
+        fontSize: 12,
+    },
+    versionText: {
+        color: '#888',
+        fontSize: 12,
+        marginTop: 5,
+    },
+    input: {
+        color: '#4A6FA5',
+        fontSize: 16,
+        padding: 10, // Added padding for better visibility
+        letterSpacing: 2, // Adds spacing between characters for PIN input
+        borderWidth: 1, // Added border for visibility
+        borderColor: '#ddd', // Light gray border
+        borderRadius: 8, // Rounded corners
+        backgroundColor: '#fff', // White background
+        marginBottom: 15
+    },
+    securityNote: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        backgroundColor: 'rgba(255, 167, 38, 0.1)', // 10% opacity of warning color
+        padding: 16,
+        borderRadius: 8,
+        marginTop: 16,
+        marginBottom: 16,
+        borderLeftWidth: 4,
+        borderLeftColor: '#FFA726',
+        width: '100%',
+    },
+    noteIcon: {
+        marginRight: 12,
+        marginTop: 3,
+    },
+    noteContent: {
+        flex: 1,
+    },
+    noteTitle: {
+        fontSize: 15,
+        fontWeight: '600',
+        color: '#FFA726',
+        marginBottom: 6,
+    },
+    noteText: {
+        fontSize: 13,
+        color: '#757575',
+        lineHeight: 20,
+    },
+    bulletPoint: {
+        fontWeight: 'bold',
+        color: '#FFA726',
+    },
+    forgetPinButton: {
+        marginTop: scaleHeight(20),
+        alignSelf: 'center',
+        paddingVertical: scaleHeight(10),
+        paddingHorizontal: scaleWidth(20),
+    },
+    forgetPinText: {
+        color: '#6B8CBE',
+        fontSize: scaleWidth(16),
+        fontWeight: '500',
+        textDecorationLine: 'underline',
+    },
 });
 
-const SafeAreaContainer = styled(SafeAreaView)`
-  flex: 1;
-  background-color: #a970ff;
-`;
-
-const Container = styled.View`
-  flex: 1;
-  background-color: #f5f5f5;
-`;
-
-const Header = styled.View`
-  background-color: transparent;
-`;
-
-const ContentContainer = styled.View`
-  flex: 1;
-  margin-top: ${scaleHeight(-40)}px;
-`;
-
-const Content = styled.View`
-  padding: ${scaleWidth(20)}px;
-  padding-bottom: ${scaleHeight(80)}px;
-`;
-
-const Logo = styled.Image`
-  width: ${scaleWidth(150)}px;
-  height: ${scaleHeight(60)}px;
-  border-radius: ${scaleWidth(10)}px;
-  resize-mode: contain;
-`;
-
-const Card = styled.View`
-  background-color: #fff;
-  border-radius: ${scaleWidth(10)}px;
-  margin-top: ${scaleHeight(20)}px;
-  padding: ${scaleWidth(20)}px;
-  shadow-color: #000;
-  shadow-offset: 0px 2px;
-  shadow-opacity: 0.1;
-  shadow-radius: 4px;
-  elevation: 3;
-`;
-
-const Title = styled.Text`
-  font-size: ${scaleWidth(22)}px;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: ${scaleHeight(25)}px;
-  text-align: center;
-`;
-
-const InputContainer = styled.View`
-  width: 100%;
-`;
-
-const InputLabel = styled.Text`
-  font-size: ${scaleWidth(14)}px;
-  color: #666;
-  margin-bottom: ${scaleHeight(5)}px;
-  font-weight: 500;
-`;
-
-const InputWrapper = styled.View`
-  flex-direction: row;
-  align-items: center;
-  background-color: #f9f9f9;
-  border-radius: ${scaleWidth(5)}px;
-  border: 1px solid #ddd;
-  margin-bottom: ${scaleHeight(15)}px;
-  padding: 0 ${scaleWidth(15)}px;
-  height: ${scaleHeight(50)}px;
-`;
-
-const Input = styled.TextInput`
-  flex: 1;
-  color: #333;
-  font-size: ${scaleWidth(16)}px;
-`;
-
-const EyeButton = styled.TouchableOpacity`
-  padding: ${scaleWidth(5)}px;
-`;
-
-const ErrorText = styled.Text`
-  color: #e74c3c;
-  font-size: ${scaleWidth(14)}px;
-  margin-bottom: ${scaleHeight(15)}px;
-`;
-
-const LoginButton = styled.TouchableOpacity`
-  background-color: ${props => props.disabled ? '#fff' : '#0062cc'};
-  border: 1px solid #0062cc;
-  padding: ${scaleHeight(15)}px;
-  border-radius: ${scaleWidth(5)}px;
-  align-items: center;
-  margin-top: ${scaleHeight(10)}px;
-`;
-
-
-const LoginButtonText = styled.Text`
-  color: #fff;
-  font-size: ${scaleWidth(16)}px;
-  font-weight: bold;
-`;
-
-const WelcomeContainer = styled.View`
-  margin-bottom: ${scaleHeight(20)}px;
-  align-items: center;
-`;
-
-const GreetingText = styled.Text`
-  color: rgba(255, 255, 255, 0.9);
-  font-size: ${scaleWidth(16)}px;
-  font-weight: 500;
-`;
-
-const UserNameText = styled.Text`
-  color: #fff;
-  font-size: ${scaleWidth(24)}px;
-  font-weight: bold;
-  margin-top: ${scaleHeight(3)}px;
-`;
-
-const AlternativeLogin = styled.TouchableOpacity`
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  margin-top: ${scaleHeight(30)}px;
-`;
-
-const FingerprintIcon = styled.View`
-  background-color: #4A6FA5;
-  width: ${scaleWidth(40)}px;
-  height: ${scaleWidth(40)}px;
-  border-radius: ${scaleWidth(20)}px;
-  align-items: center;
-  justify-content: center;
-  margin-right: ${scaleWidth(10)}px;
-`;
-
-const AlternativeLoginText = styled.Text`
-  color: #4A6FA5;
-  font-size: ${scaleWidth(16)}px;
-  font-weight: 500;
-`;
-const MainContent = styled.View`
-  flex: 1;
-  margin-bottom: ${props => props.keyboardStatus ? 0 : scaleHeight(50)}px;
-`;
-const Footer = styled.View`
-  padding: ${scaleHeight(10)}px;
-  align-items: center;
-  justify-content: center;
-  border-top-width: 1px;
-  border-top-color: #eee;
-  background-color: #fff;
-  width: 100%;
-`;
-
-const FooterText = styled.Text`
-  color: #4a6fa5;
-  font-size: ${scaleWidth(14)}px;
-  font-weight: 500;
-`;
-
-
-export default LoginScreen;
+export default AuthScreen;

@@ -15,9 +15,9 @@ const AppProvider = ({ children }) => {
     const [companyInfo, setCompanyInfo] = useState(null);
     const [dbName, setDbName] = useState(null);
     const [isConnected, setIsConnected] = useState(true);
-    const [profile, setProfile] = useState({});
-    const [reLoad, setReload] = useState(false);
     const [errorMessage, setErrorMessage] = useState(null);
+    const [reLoad, setReload] = useState(false);
+    const [profile, setProfile] = useState({});
 
     const router = useRouter();
 
@@ -33,21 +33,56 @@ const AppProvider = ({ children }) => {
             setIsConnected(true);
         }
     };
-
+    
     useEffect(() => {
         const unsubscribe = NetInfo.addEventListener(state => {
             setIsConnected(state.isConnected);
         });
+
         return () => unsubscribe();
     }, []);
 
+//     useEffect(() => {
+//     const fetchFingerprintSetting = async () => {
+//         const value = await AsyncStorage.getItem('useFingerprint');
+//         setIsFingerprint(value === 'true'); // optional: convert string to boolean
+//     };
+
+//     fetchFingerprintSetting();
+// }, []);
+
     useEffect(() => {
-        isLoggedIn();
-    }, []);
+        if (reLoad) {
+            setIsLoading(true);
+            const fetchData = async () => {
+                try {
+                    // Fetch both profile and company data in parallel
+                    const res = await getProfileInfo();
+                    setProfile(res?.data[0]);
+                    await AsyncStorage.setItem('profilename', res?.data[0].name);
+
+                    // Set company data
+                    // if (companyRes?.data) {
+                    //     setCompanyInfo(companyRes.data);
+                    //     await AsyncStorage.setItem('companyInfo', JSON.stringify(companyRes.data));
+                    // }
+
+                    // Navigate to home
+                    router.replace({ pathname: 'home' });
+                } catch (error) {
+                    console.error('Failed to fetch data:', error);
+                } finally {
+                    setIsLoading(false);
+                    setReload(false); // Reset reload flag
+                }
+            };
+
+            fetchData();
+        }
+    }, [reLoad]);
 
 
-
-    const login = async (username, password, dbName) => {
+        const login = async (username, password, dbName) => {
         setIsLoading(true);
         setErrorMessage(null);
 
@@ -176,31 +211,30 @@ const AppProvider = ({ children }) => {
             setProfile({});
             setReload(false);
         } catch (err) {
-            console.log("Logout error:", err);
+            console.error("Logout error:", err);
         } finally {
             setIsLoading(false);
         }
     };
 
-    const completLogout = async () => {
+        const completLogout = async () => {
         setIsLoading(true);
 
         try {
             router.replace('AuthScreen');
             await AsyncStorage.multiRemove([
-                'userToken', 'empId', 'tokenExpiration', 'dbName', 'empNoId', 'userPin', 'profilename', 'useFingerprint'
+                'userToken', 'empId', 'tokenExpiration', 'dbName', 'empNoId', 'userPin', 'profilename', 'userBiometric'
             ]);
 
             setUserToken(null);
             setProfile({});
             setReload(false);
         } catch (err) {
-            console.log("Logout error:", err);
+            console.error("Logout error:", err);
         } finally {
             setIsLoading(false);
         }
     };
-
     const isLoggedIn = async () => {
         const networkStatus = await checkNetwork();
         if (!networkStatus) {
@@ -249,12 +283,15 @@ const AppProvider = ({ children }) => {
                 setReload(true);
             }
         } catch (e) {
-            console.log('Login Status Error:', e);
+            console.error('Login Status Error:', e);
         } finally {
             setIsLoading(false);
         }
     };
 
+    useEffect(() => {
+        isLoggedIn();
+    }, []);
 
     const refreshProfileData = async () => {
         try {
@@ -265,52 +302,10 @@ const AppProvider = ({ children }) => {
         }
     };
 
-
-    useEffect(() => {
-        if (reLoad) {
-            setIsLoading(true);
-            const fetchData = async () => {
-                try {
-                    // Fetch both profile and company data in parallel
-                    const [profileRes, companyRes] = await Promise.all([
-                        getProfileInfo(),
-                        getCompanyInfo()
-                    ]);
-
-                    // Set profile data
-                    if (profileRes?.data?.[0]) {
-                        setProfile(profileRes.data[0]);
-                        if (profileRes.data[0].name) {
-                            await AsyncStorage.setItem('profilename', profileRes.data[0].name);
-                        }
-                    }
-
-                    // Set company data
-                    if (companyRes?.data) {
-                        setCompanyInfo(companyRes.data);
-                        await AsyncStorage.setItem('companyInfo', JSON.stringify(companyRes.data));
-                    }
-
-                    // Navigate to home
-                    router.replace({ pathname: 'home' });
-                } catch (error) {
-                    console.error('Failed to fetch data:', error);
-                } finally {
-                    setIsLoading(false);
-                    setReload(false); // Reset reload flag
-                }
-            };
-
-            fetchData();
-        }
-    }, [reLoad]);
-
     return (
         <AppContext.Provider value={{
             login,
             logout,
-            completLogout,
-            refreshProfileData,
             isLoading,
             userToken,
             companyInfo,
@@ -318,16 +313,18 @@ const AppProvider = ({ children }) => {
             isConnected,
             checkNetwork,
             setIsLoading,
-            profile,
-            setReload,
+            completLogout,
             errorMessage,
-            setErrorMessage
+            setErrorMessage,
+            profile,
+            refreshProfileData,
+            isLoading
         }}>
             {children}
-            <NetworkErrorModal
-                visible={!isConnected}
-                onRetry={onRetry}
-                onNetworkRestore={() => setIsConnected(true)}
+            <NetworkErrorModal 
+                visible={!isConnected} 
+                onRetry={onRetry} 
+                onNetworkRestore={() => setIsConnected(true)} 
             />
         </AppContext.Provider>
     );

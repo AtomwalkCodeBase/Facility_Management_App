@@ -1,5 +1,5 @@
 import { View, Text, Dimensions, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+// import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useEffect, useState } from 'react';
 import { getUserTasks, updateTask } from '../services/productServices';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -11,6 +11,7 @@ import Loader from '../components/Loader';
 import HeaderComponent from '../components/HeaderComponent';
 import { useNavigation } from 'expo-router';
 import { useIsFocused } from '@react-navigation/native';
+import { SafeAreaView } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
 
@@ -119,7 +120,7 @@ const TaskScreen = () => {
       {isLoading ? (
         <Loader visible={isLoading} />
       ) : (
-      <SafeAreaView style={styles.container} edges={['right', 'bottom', 'left']}>
+      <SafeAreaView style={styles.container}>
         {/* Day Filter Buttons */}
         <View style={styles.filterContainer}>
           {dayFilterOptions.map((filter) => (

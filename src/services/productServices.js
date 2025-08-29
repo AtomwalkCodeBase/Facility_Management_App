@@ -55,7 +55,7 @@ export async function getUserTasks(task_type, customer_id, lead_id) {
     data['task_data'] = task_data
     data['is_completed'] = is_completed; 
     data['assign_user'] = assign_user; 
-    console.log("On call data===",data)
+    // console.log("On call data===",data)
     const url = await updateTaskURL();
     
     return authAxiosPost(url, data);
@@ -76,7 +76,7 @@ export async function setUserPinView(o_pin, n_pin, employeeId) {
   }
 
 export async function forgetUserPinView(data) {
-    console.log("Data to be sent--->", data);
+    // console.log("Data to be sent--->", data);
     const url = await forgetEmpPinURL();
     return publicAxiosRequest.post(url, data);
 }

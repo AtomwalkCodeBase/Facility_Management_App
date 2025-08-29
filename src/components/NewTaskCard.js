@@ -9,6 +9,8 @@ const NewTaskCard = ({ task, onMarkComplete }) => {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [isLongDescription, setIsLongDescription] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [image, setImage] = useState(null);
+
 
   // Memoized priority configuration
   const priorityConfig = useMemo(() => {
@@ -78,7 +80,10 @@ const NewTaskCard = ({ task, onMarkComplete }) => {
   }, [task.status]);
 
   const handlePress = () => onMarkComplete(task);
-  const handleImagePress = () => setIsModalVisible(true);
+  const handleImagePress = (data) => {
+    setImage(data?.originalData?.ref_file)
+    setIsModalVisible(true);
+  }
   const handleCloseModal = () => setIsModalVisible(false);
 
   const handleDescriptionTextLayout = (e) => {
@@ -200,7 +205,7 @@ const NewTaskCard = ({ task, onMarkComplete }) => {
 
       {/* Image Attachment */}
       {task?.originalData?.ref_file && (
-        <TouchableOpacity style={styles.imageAttachment} onPress={handleImagePress}>
+        <TouchableOpacity style={styles.imageAttachment} onPress={() =>handleImagePress(task)}>
           <View style={styles.imageAttachmentContent}>
             <FontAwesome name="image" size={16} color="#6B7280" />
             <Text style={styles.imageAttachmentText}>Problem Image</Text>
@@ -224,7 +229,7 @@ const NewTaskCard = ({ task, onMarkComplete }) => {
       <ImageModal
         isVisible={isModalVisible}
         onClose={handleCloseModal}
-        qrValue={task?.originalData?.ref_file || 'EMP-007'}
+        qrValue={image}
       />
     </Animated.View>
   );

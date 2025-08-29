@@ -1,8 +1,9 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
+// import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useEffect, useState } from 'react';
 import HomeScreen from '../../src/screens/HomeScreen';
 import { getProfileInfo } from '../../src/services/authServices';
 import FingerPopup from '../../src/screens/FingerPopup';
+import { SafeAreaView, StatusBar } from 'react-native';
 
 const Home = () => {
   const [isManager, setIsManager] = useState(false);
@@ -23,7 +24,8 @@ const Home = () => {
   }, []);
 
   return (
-<SafeAreaView style={{ flex: 1 }}>
+<SafeAreaView style={{ flex: 1, marginTop: StatusBar.currentHeight, }}>
+  <StatusBar />
       <HomeScreen />
       <FingerPopup/>
       

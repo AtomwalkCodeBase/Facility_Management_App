@@ -3,7 +3,6 @@ import { View, Text, Dimensions, StyleSheet, FlatList, Animated, Alert, Image, T
 import { useRoute } from "@react-navigation/native";
 import { AppContext } from "../../context/AppContext";
 import { getCompanyInfo, getProfileInfo } from "../services/authServices";
-import { StatusBar } from "expo-status-bar";
 import { getActivityList, getUserTasks, updateTask } from "../services/productServices";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import TaskCard from "../components/NewTaskCard";
@@ -191,8 +190,6 @@ const HomeScreen = ({ navigation }) => {
 
   return (
     <GestureHandlerRootView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor="#4A6FA5" />
-
       {/* Header with Gradient Background */}
       <LinearGradient colors={["#4A6FA5", "#6B8CBE"]} style={styles.header}>
         <View style={styles.headerContent}>

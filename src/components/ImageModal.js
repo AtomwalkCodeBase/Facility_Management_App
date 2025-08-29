@@ -1,8 +1,10 @@
-import React from 'react';
-import { Modal, Text, View, TouchableOpacity, Image } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Modal, Text, View, TouchableOpacity, Image, SafeAreaView, Linking  } from 'react-native';
 import styled from 'styled-components/native';
 import { useLocalSearchParams } from 'expo-router';
-
+import HeaderComponent from './HeaderComponent';
+import ImageView from 'react-native-image-viewing';
+import SuccessModal from './SuccessModal';
 // Styled Components
 const ModalContainer = styled.View`
   flex: 1;
@@ -35,25 +37,49 @@ const CloseButtonText = styled.Text`
 `;
 
 const ImageMOdal = ({ isVisible, onClose, qrValue }) => {
-	const { item } = useLocalSearchParams();
+  const { item } = useLocalSearchParams();
+  const [isImage, setIsImage] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+
+  useEffect(() => {
+    if (qrValue) {
+      const fileExtension = qrValue.split('.').pop().split('?')[0].toLowerCase();
+      setIsImage(['jpg', 'jpeg', 'png'].includes(fileExtension));
+
+      if (!['jpg', 'jpeg', 'png'].includes(fileExtension)) {
+        // Handle other files
+        setSuccessMessage("The file is being downloaded")
+        setModalOpen(true);
+        Linking.openURL(qrValue).catch((err) =>
+          console.error('Failed to open URL:', err)
+        );
+        onClose?.(); // close modal since it's not an image
+      }
+    }
+  }, [qrValue]);
+
+  if (!isImage) return null; // nothing to render if not an image
+
   return (
-    <Modal
-      visible={isVisible}
-      transparent={true}
-      animationType="slide"
-    >
-      <ModalContainer>
-        <QRContainer>
-          <Text style={{ fontSize: 18, marginBottom: 20 }}>Image</Text>
-          {/* <QRCode value={qrValue || 'No Value Provided'} size={200} /> */}
-      <Image source={{ uri: qrValue }} style={{ width: 200, height: 200, marginBottom: 20 }} resizeMode="contain" />
-          <CloseButton onPress={onClose}>
-            <CloseButtonText>Close</CloseButtonText>
-          </CloseButton>
-        </QRContainer>
-      </ModalContainer>
-    </Modal>
+    <SafeAreaView style={{ flex: 1 }}>
+      <View style={{ flex: 1 }}>
+        <ImageView
+          images={[{ uri: qrValue }]}
+          imageIndex={0}
+          visible={isVisible}
+          onRequestClose={onClose}
+          presentationStyle="overFullScreen"
+        />
+      </View>
+      <SuccessModal
+      visible={modalOpen}
+      message={successMessage}
+      onClose={() => setModalOpen(false)}
+      />
+    </SafeAreaView>
   );
 };
+
 
 export default ImageMOdal;
