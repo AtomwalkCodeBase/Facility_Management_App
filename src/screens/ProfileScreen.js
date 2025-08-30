@@ -40,6 +40,7 @@ const ProfileScreen = () => {
         setUserPin(storedPin);
 
         const biometric = await AsyncStorage.getItem('userBiometric');
+        console.log("biomateric", biometric)
         setBiometricEnabled(biometric === 'true');
       } catch (error) {
         console.error('Error loading user data:', error);

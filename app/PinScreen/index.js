@@ -63,7 +63,7 @@ const AuthScreen = () => {
         loadName();
 
         const getBioMatricS = async () => {
-            const bioStatus = await AsyncStorage.getItem('useFingerprint');
+            const bioStatus = await AsyncStorage.getItem('userBiometric');
             setShowBiomatricOption(bioStatus === 'true');
             setShowPinInput(bioStatus !== 'true');
         };
