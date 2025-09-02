@@ -13,7 +13,6 @@ import {
     Dimensions,
     StatusBar,
     Image,
-    SafeAreaView,
     ScrollView
 } from 'react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
@@ -25,6 +24,7 @@ import ErrorModal from '../../src/components/ErrorModal';
 import { LinearGradient } from 'expo-linear-gradient';
 import ConfirmationModal from '../../src/components/ConfirmationModal';
 import Constants from 'expo-constants';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width, height } = Dimensions.get('window');
 

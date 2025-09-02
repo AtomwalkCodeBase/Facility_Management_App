@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Animated, Easing, ScrollView, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Animated, Easing, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from "expo-router";
 import { MaterialIcons } from '@expo/vector-icons';
@@ -9,6 +9,7 @@ import { setUserPinView } from '../services/productServices';
 import HeaderComponent from '../components/HeaderComponent';
 import SuccessModal from '../components/SuccessModal';
 import Loader from '../components/Loader';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const ResetPasswordScreen = () => {
   const [oldPin, setOldPin] = useState('');
@@ -122,7 +123,7 @@ const ResetPasswordScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={["left", "right", "bottom"]}>
       <HeaderComponent
         headerTitle="Update Your PIN"
         onBackPress={() => router.back()}

@@ -142,8 +142,7 @@ const ResetPinScreen = () => {
 
 
   return (
-    <SafeAreaContainer>
-      <StatusBar barStyle="light-content" backgroundColor="#4A6FA5" />
+    <SafeAreaContainer edges={["left", "right", "bottom"]}>
       <Container>
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <Header>
