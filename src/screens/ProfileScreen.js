@@ -11,6 +11,7 @@ import moment from 'moment';
 import ConfirmationModal from '../components/ConfirmationModal';
 import Loader from '../components/Loader';
 import Constants from 'expo-constants';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width, height } = Dimensions.get('window');
 
@@ -40,7 +41,6 @@ const ProfileScreen = () => {
         setUserPin(storedPin);
 
         const biometric = await AsyncStorage.getItem('userBiometric');
-        console.log("biomateric", biometric)
         setBiometricEnabled(biometric === 'true');
       } catch (error) {
         console.error('Error loading user data:', error);
@@ -99,7 +99,7 @@ const ProfileScreen = () => {
   // console.log("Profile==",profile)
 
   return (
-    <>
+    <SafeAreaView edges={["left", "right", "bottom"]}>
       <HeaderComponent headerTitle="Employee Profile" onBackPress={handleBackPress} />
       {isLoading ? (
         <Loader visible={isLoading} />
@@ -258,7 +258,7 @@ const ProfileScreen = () => {
             />
         </ScrollView>
       )}
-    </>
+    </SafeAreaView>
   );
 };
 
@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     backgroundColor: '#ecf0f1',
-    paddingBottom: 30,
+    // paddingBottom: 30,
   },
   profileHeader: {
     backgroundColor: '#fff',
@@ -453,17 +453,20 @@ const styles = StyleSheet.create({
     marginLeft: 68,
   },
     fixedFooter: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: scaleHeight(10),
+    // position: 'absolute',
+    // bottom: 0,
+    // left: 0,
+    // right: 0,
+    // padding: scaleHeight(10),
+    // alignItems: 'center',
+    // justifyContent: 'center',
+    // borderTopWidth: 1,
+    // borderTopColor: '#eee',
+    // backgroundColor: '#fff',
+    // width: '100%',
+    paddingBottom: 65,
     alignItems: 'center',
     justifyContent: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-    backgroundColor: '#fff',
-    width: '100%',
   },
   footerText: {
     color: "#333",

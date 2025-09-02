@@ -13,7 +13,8 @@ import {
     Dimensions,
     StatusBar,
     Image,
-    SafeAreaView
+    SafeAreaView,
+    ScrollView
 } from 'react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
 import Logos from '../../assets/images/Atom_walk_logo.jpg'
@@ -164,8 +165,7 @@ const AuthScreen = () => {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
-            <StatusBar backgroundColor="#4A6FA5" barStyle="light-content" />
+        <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
             
             {/* Bank Logo Area */}
             <LinearGradient
@@ -192,7 +192,7 @@ const AuthScreen = () => {
 
             <Loader visible={isLoading} />
             
-            <View style={styles.contentContainer}>
+            <ScrollView style={styles.contentContainer}showsVerticalScrollIndicator={false}>
                 {!showPinInput && !showFingerprint ? (
                     <View style={styles.card}>
                         <Text style={styles.loginOptionsText}>Login Options</Text>
@@ -363,7 +363,7 @@ const AuthScreen = () => {
                         Version {appVersion ? `${appVersion}` : '0.0.1'}
                     </Text>
                 </View>
-            </View>
+            </ScrollView>
 
             <ErrorModal
                 visible={isNetworkError}
@@ -394,8 +394,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#F5F5F5',
     },
     header: {
-        paddingTop: 100,
-        paddingBottom: 30,
+        paddingVertical: 30,
         paddingHorizontal: 20,
         borderBottomLeftRadius: 20,
         borderBottomRightRadius: 20,
@@ -445,7 +444,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingTop: 20,
         paddingBottom: 10,
-        justifyContent: 'space-between',
+        // justifyContent: 'space-between',
     },
     card: {
         backgroundColor: '#fff',
@@ -568,7 +567,7 @@ const styles = StyleSheet.create({
     fingerprintIconContainer: {
         marginVertical: 30,
         padding: 20,
-        backgroundColor: '#B1C0D7',
+        backgroundColor: '#dae6f8ff',
         borderRadius: 60,
     },
     fingerprintHint: {
@@ -593,7 +592,6 @@ const styles = StyleSheet.create({
     },
     footer: {
         alignItems: 'center',
-        marginTop: 20,
         paddingVertical: 15,
     },
     footerText: {
@@ -604,6 +602,7 @@ const styles = StyleSheet.create({
         color: '#888',
         fontSize: 12,
         marginTop: 5,
+        marginBottom: 20
     },
     input: {
     color: '#4A6FA5',

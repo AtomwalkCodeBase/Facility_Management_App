@@ -1,58 +1,124 @@
-import React from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  SafeAreaView,
-  Platform,
-  StatusBar,
-} from "react-native";
-import styled from "styled-components/native";
-import { Ionicons } from "@expo/vector-icons";
+import React from 'react';
+import {  Text, Dimensions, Platform, StatusBar, StyleSheet, View, TouchableOpacity, SafeAreaView} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
-const HeaderContainer = styled(SafeAreaView)`
-  background-color: #fff;
-  padding: ${Platform.OS === "android" ? StatusBar.currentHeight + 10 : 20}px 20px 10px 20px;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom-width: 1px;
-  border-bottom-color: #e0e0e0;
-`;
-
-const BackButton = styled(TouchableOpacity)`
-  padding: 5px;
-`;
-
-const HeaderTitle = styled(Text)`
-  font-size: 20px;
-  font-weight: bold;
-  color: #333;
-  text-align: center;
-  flex: 1;
-`;
-
-const HeaderSide = styled(View)`
-  width: 30px;
-  align-items: center;
-  justify-content: center;
-`;
-
-// HeaderComponent
-const HeaderComponent = ({ headerTitle, onBackPress }) => {
+const HeaderComponent = ({ headerTitle,  onBackPress, icon1Name, icon1OnPress, icon2Name, icon2OnPress, filterCount }) => {
   return (
-    <HeaderContainer>
-      <HeaderSide>
-        <BackButton onPress={onBackPress}>
-          <Ionicons name="arrow-back" size={24} color="#333" />
-        </BackButton>
-      </HeaderSide>
-
-      <HeaderTitle>{headerTitle}</HeaderTitle>
-
-      <HeaderSide>{/* Empty but required for layout symmetry */}</HeaderSide>
-    </HeaderContainer>
+    <>
+      {/* Handle status bar separately for Android */}
+      {Platform.OS === 'android' && <View style={styles.statusBar} />}
+      
+      {/* SafeAreaView handles iOS notches automatically */}
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.headerContainer}>
+          <TouchableOpacity 
+            onPress={onBackPress}
+            style={styles.backButton}
+            activeOpacity={0.6}
+          >
+            <Ionicons name="arrow-back" size={24} color="#333" />
+          </TouchableOpacity>
+          
+          <Text style={styles.headerText} numberOfLines={1}>
+            {headerTitle}
+          </Text>
+          
+          <View style={styles.rightIconsContainer}>
+            {icon1Name && (
+  <TouchableOpacity 
+    onPress={icon1OnPress}
+    style={styles.iconButton}
+    activeOpacity={0.6}
+  >
+    <Ionicons name={icon1Name} size={24} color="#fff" />
+    {filterCount > 0 && (
+      <View style={styles.filterBadge}>
+        <Text style={styles.filterBadgeText}>{filterCount}</Text>
+      </View>
+    )}
+  </TouchableOpacity>
+)}
+            
+            {icon2Name && (
+              <TouchableOpacity 
+                onPress={icon2OnPress}
+                style={styles.iconButton}
+                activeOpacity={0.6}
+              >
+                <Ionicons name={icon2Name} size={24} color="#fff" />
+              </TouchableOpacity>
+            )}
+            
+            {/* This spacer ensures proper alignment when no icons are present */}
+            {!icon1Name && !icon2Name && <View style={styles.spacer} />}
+          </View>
+        </View>
+      </SafeAreaView>
+    </>
   );
 };
+
+const styles = StyleSheet.create({
+  statusBar: {
+    backgroundColor: '#fff',
+  },
+  safeArea: {
+    backgroundColor: '#fff',
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#A6A7A6',
+    backgroundColor: '#fff',
+  },
+  backButton: {
+    padding: 8,
+    marginRight: 8,
+  },
+  headerText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    flex: 1,
+    textAlign: 'center',
+    marginHorizontal: 8,
+  },
+  rightIconsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  iconButton: {
+    padding: 8,
+    marginLeft: 8,
+    flexDirection: "row"
+  },
+  spacer: {
+    width: 40,
+  },
+  filterBadge: {
+  backgroundColor: "#ff5252",
+  borderRadius: 8,
+  minWidth: 16,
+  height: 16,
+  alignItems: "center",
+  justifyContent: "center",
+  marginLeft: -8,
+  marginTop: -8,
+  position: "absolute",
+  right: 2,
+  top: 2,
+  zIndex: 1,
+  paddingHorizontal: 3,
+},
+filterBadgeText: {
+  color: "#fff",
+  fontSize: 12,
+  fontWeight: "bold",
+},
+});
 
 export default HeaderComponent;
