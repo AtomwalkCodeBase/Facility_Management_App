@@ -13,7 +13,7 @@ const ContentContainer = styled.View`
   width: 80%;
   padding: 20px;
   background-color: #fff;
-  border: 1px solid #a970ff;
+  border: 1px solid #4A6FA5;
   border-radius: 10px;
   align-items: center;
 `;

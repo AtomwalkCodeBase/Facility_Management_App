@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import styled from 'styled-components/native';
-import { View, TouchableOpacity, ActivityIndicator, StyleSheet, StatusBar, SafeAreaView, 
+import { View, TouchableOpacity, ActivityIndicator, StyleSheet, StatusBar, 
   ScrollView, Dimensions, Text, Alert, Keyboard, Platform } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -14,6 +14,7 @@ import { forgetUserPinView } from '../../src/services/productServices';
 import SuccessModal from '../../src/components/SuccessModal';
 import Loader from '../../src/components/Loader';
 import { AppContext } from '../../context/AppContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width, height } = Dimensions.get('window');
 

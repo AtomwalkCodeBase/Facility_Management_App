@@ -3,7 +3,8 @@ import React, { useEffect, useState } from 'react';
 import HomeScreen from '../../src/screens/HomeScreen';
 import { getProfileInfo } from '../../src/services/authServices';
 import FingerPopup from '../../src/screens/FingerPopup';
-import { SafeAreaView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
 
 const Home = () => {
   const [isManager, setIsManager] = useState(false);
@@ -24,11 +25,11 @@ const Home = () => {
   }, []);
 
   return (
-<SafeAreaView style={{ flex: 1 }} edges={["left", "right", "bottom"]}>
+<>
       <HomeScreen />
       <FingerPopup/>
       
-      </SafeAreaView>
+      </>
 
   );
 };

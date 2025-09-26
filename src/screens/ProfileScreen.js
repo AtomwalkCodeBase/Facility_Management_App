@@ -176,14 +176,14 @@ const ProfileScreen = () => {
           </View>
 
           {/* Leave Information */}
-          <View style={styles.section}>
+          {/* <View style={styles.section}>
             <Text style={styles.sectionHeader}>LEAVE INFORMATION</Text>
             <InfoRow 
               icon="event-available" 
               label="Available Leaves" 
               value={profile?.max_no_leave} 
             />
-          </View>
+          </View> */}
 
           {/* Action Buttons */}
 

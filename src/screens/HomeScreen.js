@@ -14,6 +14,7 @@ import { useIsFocused } from '@react-navigation/native';
 // import LottieView from "lottie-react-native";
 import Loader from "../components/Loader";
 import ModalComponent from "../components/ModalComponent";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const { width, height } = Dimensions.get("window");
 
@@ -189,7 +190,7 @@ const HomeScreen = ({ navigation }) => {
   );
 
   return (
-    <GestureHandlerRootView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={[ "left", "right"]}>
       {/* Header with Gradient Background */}
       <LinearGradient colors={["#4A6FA5", "#6B8CBE"]} style={styles.header}>
         <View style={styles.headerContent}>
@@ -330,7 +331,7 @@ const HomeScreen = ({ navigation }) => {
                cancelCompletion={cancelCompletion}
                isUpdating={isUpdating}
        /> */}
-    </GestureHandlerRootView>
+    </SafeAreaView>
   );
 };
 

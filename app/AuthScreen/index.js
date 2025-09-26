@@ -489,7 +489,7 @@ forgetPinText: {
 
 const SafeAreaContainer = styled(SafeAreaView)`
   flex: 1;
-  background-color: #a970ff;
+  background-color: #4A6FA5;
 `;
 
 const Container = styled.View`
