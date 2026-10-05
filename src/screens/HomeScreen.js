@@ -1,6 +1,5 @@
-import { useContext, useState, useEffect } from "react";
+import { useContext, useState, useEffect, useCallback } from "react";
 import { View, Text, Dimensions, StyleSheet, FlatList, Animated, Alert, Image, TouchableOpacity, Modal } from "react-native";
-import { useRoute } from "@react-navigation/native";
 import { AppContext } from "../../context/AppContext";
 import { getCompanyInfo, getProfileInfo } from "../services/authServices";
 import { getActivityList, getUserTasks, updateTask } from "../services/productServices";
@@ -8,7 +7,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import TaskCard from "../components/NewTaskCard";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useIsFocused } from '@react-navigation/native';
+import { useLocalSearchParams, useFocusEffect } from 'expo-router';
 
 
 // import LottieView from "lottie-react-native";
@@ -19,10 +18,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 const { width, height } = Dimensions.get("window");
 
 const dayFilterOptions = ["All", "Today", "Next 3 Days", "Past"];
-const statusFilterOptions = [ "Planned", "Completed", "Not Planned"];
+const statusFilterOptions = ["Planned", "Completed", "Not Planned"];
 
 const HomeScreen = ({ navigation }) => {
-  const route = useRoute();
+  const params = useLocalSearchParams();
   const { userToken } = useContext(AppContext);
   const [company, setCompany] = useState({});
   const [profile, setProfile] = useState([]);
@@ -37,7 +36,7 @@ const HomeScreen = ({ navigation }) => {
   const [selectedStatusFilter, setSelectedStatusFilter] = useState("Planned");
   const [tasks, setTasks] = useState([]);
   const [isLoading, setIsLoading] = useState(false)
-  const isFocused = useIsFocused();
+
   useEffect(() => {
     fetchData();
     Animated.timing(fadeAnim, {
@@ -54,9 +53,11 @@ const HomeScreen = ({ navigation }) => {
   //   }
   // }, [route?.params?.refresh]);
 
-  useEffect(() => {
-    fetchTasks(selectedDayFilter, selectedStatusFilter);
-  }, [selectedDayFilter, selectedStatusFilter,isFocused]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchTasks(selectedDayFilter, selectedStatusFilter);
+    }, [selectedDayFilter, selectedStatusFilter])
+  );
 
   const fetchData = async () => {
     setLoading(true);
@@ -107,8 +108,8 @@ const HomeScreen = ({ navigation }) => {
             task.priority === "01"
               ? "High"
               : task.priority === "02"
-              ? "Medium"
-              : "Low",
+                ? "Medium"
+                : "Low",
           taskType: task.task_type_display || task.task_type || "General",
           customer: task.customer?.name || "No Customer",
           assignedTo:
@@ -130,7 +131,7 @@ const HomeScreen = ({ navigation }) => {
     } catch (error) {
       console.error("Error fetching tasks:", error);
       setTasks([]);
-    }finally{
+    } finally {
       setIsLoading(false)
     }
   };
@@ -190,7 +191,7 @@ const HomeScreen = ({ navigation }) => {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={[ "left", "right"]}>
+    <SafeAreaView style={styles.safeArea} edges={["left", "right"]}>
       {/* Header with Gradient Background */}
       <LinearGradient colors={["#4A6FA5", "#6B8CBE"]} style={styles.header}>
         <View style={styles.headerContent}>
@@ -360,6 +361,8 @@ const styles = StyleSheet.create({
   userInfo: {
     flexDirection: "row",
     alignItems: "center",
+    flex: 1,
+    minWidth: 0,
   },
   profileImage: {
     width: width * 0.12,
@@ -370,6 +373,9 @@ const styles = StyleSheet.create({
   },
   userTextContainer: {
     marginLeft: width * 0.04,
+    flex: 1,
+    minWidth: 0,
+    paddingRight: 10,
   },
   welcomeText: {
     fontSize: 14,
@@ -380,6 +386,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontWeight: "600",
     marginTop: 4,
+    flexShrink: 1,
   },
   statsContainer: {
     flexDirection: "row",
@@ -403,7 +410,7 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   pendingStat: {
-    color:"white",
+    color: "white",
   },
   statLabel: {
     color: "rgba(255,255,255,0.8)",
@@ -432,7 +439,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F1F5F9",
     marginRight: 8,
     marginBottom: 8,
-        border: "1px",
+    border: "1px",
     borderColor: "#6B8CBE",
     borderWidth: 0.3
   },
@@ -509,7 +516,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#333333",
     marginVertical: 10,
-    marginBottom:30
+    marginBottom: 30
   },
   taskName: {
     fontSize: 16,

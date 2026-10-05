@@ -16,39 +16,39 @@ const NewTaskCard = ({ task, onMarkComplete }) => {
   const priorityConfig = useMemo(() => {
     const priorityMap = {
       "01": "High",
-      "02": "Medium", 
+      "02": "Medium",
       "03": "Low"
     };
-    
+
     const priorityName = priorityMap[task.priority] || task.priority || "Medium";
-    
+
     const colors = {
-      "High": { 
-        cardBg: "#FEF7F7", 
-        accentBg: "#FFF5F5", 
-        border: "#FECACA", 
-        text: "#B91C1C", 
+      "High": {
+        cardBg: "#FEF7F7",
+        accentBg: "#FFF5F5",
+        border: "#FECACA",
+        text: "#B91C1C",
         dot: "#DC2626",
         shadow: "#FCA5A5"
       },
-      "Medium": { 
-        cardBg: "#FFFBF7", 
-        accentBg: "#FFF7ED", 
-        border: "#FED7AA", 
-        text: "#C2410C", 
+      "Medium": {
+        cardBg: "#FFFBF7",
+        accentBg: "#FFF7ED",
+        border: "#FED7AA",
+        text: "#C2410C",
         dot: "#EA580C",
         shadow: "#FDBA74"
       },
-      "Low": { 
-        cardBg: "#F6FDF9", 
-        accentBg: "#F0FDF4", 
-        border: "#BBF7D0", 
-        text: "#166534", 
+      "Low": {
+        cardBg: "#F6FDF9",
+        accentBg: "#F0FDF4",
+        border: "#BBF7D0",
+        text: "#166534",
         dot: "#16A34A",
         shadow: "#86EFAC"
       }
     };
-    
+
     return {
       name: priorityName,
       ...colors[priorityName]
@@ -68,14 +68,14 @@ const NewTaskCard = ({ task, onMarkComplete }) => {
       'Deleted': { bg: '#6B7280', icon: 'trash-outline' },
       'Not Planned': { bg: '#6B7280', icon: 'ban-outline' }
     };
-    
+
     return statusColors[task.status] || { bg: '#6B7280', icon: 'help-circle-outline' };
   }, [task.status]);
 
   // Determine if task can be marked complete
   const canMarkComplete = useMemo(() => {
-    const hiddenStatuses = ['In Progress', 'Completed', 'On Hold', 'Reassigned to User', 
-                           'Closed- Not Successful', 'Waiting for Response', 'Deleted', 'Not Planned'];
+    const hiddenStatuses = ['In Progress', 'Completed', 'On Hold', 'Reassigned to User',
+      'Closed- Not Successful', 'Waiting for Response', 'Deleted', 'Not Planned'];
     return !hiddenStatuses.includes(task.status);
   }, [task.status]);
 
@@ -105,8 +105,8 @@ const NewTaskCard = ({ task, onMarkComplete }) => {
 
   return (
     <Animated.View style={[
-      styles.card, 
-      { 
+      styles.card,
+      {
         backgroundColor: priorityConfig.cardBg,
         borderColor: priorityConfig.border,
         shadowColor: priorityConfig.shadow,
@@ -121,7 +121,7 @@ const NewTaskCard = ({ task, onMarkComplete }) => {
               {priorityConfig.name}
             </Text>
           </View>
-          
+
           <View style={[styles.statusBadge, { backgroundColor: statusConfig.bg }]}>
             <Ionicons name={statusConfig.icon} size={12} color="white" />
             <Text style={styles.statusText}>{task.status}</Text>
@@ -152,7 +152,7 @@ const NewTaskCard = ({ task, onMarkComplete }) => {
             {task.description}
           </Text>
           {isLongDescription && (
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => setShowFullDescription(!showFullDescription)}
               style={styles.readMoreButton}
             >
@@ -205,7 +205,7 @@ const NewTaskCard = ({ task, onMarkComplete }) => {
 
       {/* Image Attachment */}
       {task?.originalData?.ref_file && (
-        <TouchableOpacity style={styles.imageAttachment} onPress={() =>handleImagePress(task)}>
+        <TouchableOpacity style={styles.imageAttachment} onPress={() => handleImagePress(task)}>
           <View style={styles.imageAttachmentContent}>
             <FontAwesome name="image" size={16} color="#6B7280" />
             <Text style={styles.imageAttachmentText}>Problem Image</Text>
@@ -216,12 +216,12 @@ const NewTaskCard = ({ task, onMarkComplete }) => {
 
       {/* Action Button */}
       {canMarkComplete && (
-        <TouchableOpacity 
-          style={styles.actionButton} 
+        <TouchableOpacity
+          style={styles.actionButton}
           onPress={handlePress}
           activeOpacity={0.8}
         >
-          <AntDesign name="checkcircleo" size={18} color="white" />
+          <Ionicons name="checkmark-circle-outline" size={18} color="white" />
           <Text style={styles.actionButtonText}>Mark Complete</Text>
         </TouchableOpacity>
       )}
@@ -250,37 +250,37 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: '#F3F4F6', // Will be overridden by priority border
   },
-  
+
   header: {
     marginBottom: 16,
   },
-  
+
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
   },
-  
+
   priorityIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  
+
   priorityDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
     marginRight: 6,
   },
-  
+
   priorityText: {
     fontSize: 12,
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  
+
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -289,14 +289,14 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     gap: 4,
   },
-  
+
   statusText: {
     fontSize: 11,
     fontWeight: '600',
     color: 'white',
     textTransform: 'uppercase',
   },
-  
+
   title: {
     fontSize: 18,
     fontWeight: '700',
@@ -304,19 +304,19 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     marginBottom: 8,
   },
-  
+
   taskTypeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
-  
+
   taskType: {
     fontSize: 13,
     color: '#6B7280',
     fontWeight: '500',
   },
-  
+
   descriptionContainer: {
     backgroundColor: '#F9FAFB', // Will be overridden by priority accent color
     padding: 8,
@@ -325,51 +325,51 @@ const styles = StyleSheet.create({
     borderLeft: 4,
     borderLeftColor: '#E5E7EB',
   },
-  
+
   description: {
     fontSize: 14,
     color: '#374151',
     lineHeight: 20,
   },
-  
+
   readMoreButton: {
     marginTop: 8,
   },
-  
+
   readMoreText: {
     fontSize: 13,
     color: '#3B82F6',
     fontWeight: '600',
   },
-  
+
   detailsGrid: {
     marginBottom: 16,
   },
-  
+
   detailRow: {
     flexDirection: 'row',
     marginBottom: 12,
     gap: 16,
   },
-  
+
   detailItem: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
     gap: 8,
   },
-  
+
   fullWidth: {
     flex: 1,
   },
-  
+
   detailText: {
     fontSize: 14,
     color: '#374151',
     fontWeight: '500',
     flex: 1,
   },
-  
+
   imageAttachment: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -379,19 +379,19 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 16,
   },
-  
+
   imageAttachmentContent: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  
+
   imageAttachmentText: {
     fontSize: 14,
     color: '#374151',
     fontWeight: '500',
   },
-  
+
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -401,7 +401,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     gap: 8,
   },
-  
+
   actionButtonText: {
     fontSize: 15,
     fontWeight: '600',

@@ -8,8 +8,7 @@ import { Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Loader from '../components/Loader';
 import HeaderComponent from '../components/HeaderComponent';
-import { useNavigation } from 'expo-router';
-import { useIsFocused } from '@react-navigation/native';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width, height } = Dimensions.get('window');
@@ -28,9 +27,7 @@ const TaskScreen = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const isFocused = useIsFocused();
-  
-    const navigation = useNavigation();
+  const router = useRouter();
 
   const handleTaskComplete = (task) => {
     setSelectedTask(task);
@@ -88,8 +85,8 @@ const TaskScreen = () => {
           task.priority === '01'
             ? 'High'
             : task.priority === '02'
-            ? 'Medium'
-            : 'Low',
+              ? 'Medium'
+              : 'Low',
         taskType: task.task_type_display || task.task_type || 'General',
         customer: task.customer?.name || 'No Customer',
         assignedTo: task.curr_user?.user_nick_name || task.curr_user?.user_name || 'Unassigned',
@@ -98,81 +95,83 @@ const TaskScreen = () => {
       }));
 
       setTasks(formattedTasks);
-     
+
     } catch (error) {
       console.error('Error fetching tasks:', error);
       setTasks([]); // Ensure tasks is set to empty array on error
-    }finally{
+    } finally {
       setIsLoading(false);
     }
   };
 
-    const handleBackPress = () => navigation.goBack();
+  const handleBackPress = () => router.back();
 
-  useEffect(() => {
-    fetchTasks(selectedFilter);
-  }, [selectedFilter, isFocused]);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchTasks(selectedFilter);
+    }, [selectedFilter])
+  );
 
   return (
     <>
-       <HeaderComponent headerTitle="Task Screen" onBackPress={handleBackPress} />
+      <HeaderComponent headerTitle="Task Screen" onBackPress={handleBackPress} />
       {isLoading ? (
         <Loader visible={isLoading} />
       ) : (
-      <SafeAreaView style={styles.container} edges={["left", "right"]}>
-        {/* Day Filter Buttons */}
-        <View style={styles.filterContainer}>
-          {dayFilterOptions.map((filter) => (
-            <TouchableOpacity
-              key={filter.value}
-              style={[
-                styles.filterButton,
-                selectedFilter === filter.value && styles.activeFilter,
-              ]}
-              onPress={() => setSelectedFilter(filter.value)}
-            >
-              <Text
+        <SafeAreaView style={styles.container} edges={["left", "right"]}>
+          {/* Day Filter Buttons */}
+          <View style={styles.filterContainer}>
+            {dayFilterOptions.map((filter) => (
+              <TouchableOpacity
+                key={filter.value}
                 style={[
-                  styles.filterText,
-                  selectedFilter === filter.value && styles.activeFilterText,
+                  styles.filterButton,
+                  selectedFilter === filter.value && styles.activeFilter,
                 ]}
+                onPress={() => setSelectedFilter(filter.value)}
               >
-                {filter.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Task List or Empty State */}
-        {tasks.length > 0 ? (
-          <FlatList
-            data={tasks.reverse()}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <NewTaskCard task={item} onMarkComplete={handleTaskComplete} />
-            )}
-            contentContainerStyle={styles.taskListContainer}
-            showsVerticalScrollIndicator={false}
-          />
-        ) : (
-          <View style={styles.noTaskContainer}>
-            <Ionicons name="checkmark-done-circle" size={60} color="#D3D3D3" />
-            <Text style={styles.noTaskText}>No Tasks Available</Text>
-            <Text style={styles.noTaskSubText}>You're all caught up!</Text>
+                <Text
+                  style={[
+                    styles.filterText,
+                    selectedFilter === filter.value && styles.activeFilterText,
+                  ]}
+                >
+                  {filter.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
-        )}
 
-        <ModalComponent
-          modalVisible={modalVisible}
-          setModalVisible={setModalVisible}
-          confirmCompletion={confirmCompletion}
-          cancelCompletion={cancelCompletion}
-          isUpdating={isUpdating}
-        />
-      </SafeAreaView>
+          {/* Task List or Empty State */}
+          {tasks.length > 0 ? (
+            <FlatList
+              data={tasks.reverse()}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <NewTaskCard task={item} onMarkComplete={handleTaskComplete} />
+              )}
+              contentContainerStyle={styles.taskListContainer}
+              showsVerticalScrollIndicator={false}
+            />
+          ) : (
+            <View style={styles.noTaskContainer}>
+              <Ionicons name="checkmark-done-circle" size={60} color="#D3D3D3" />
+              <Text style={styles.noTaskText}>No Tasks Available</Text>
+              <Text style={styles.noTaskSubText}>You're all caught up!</Text>
+            </View>
+          )}
+
+          <ModalComponent
+            modalVisible={modalVisible}
+            setModalVisible={setModalVisible}
+            confirmCompletion={confirmCompletion}
+            cancelCompletion={cancelCompletion}
+            isUpdating={isUpdating}
+          />
+        </SafeAreaView>
       )}
 
- {/* <Loader visible={isLoading}/> */}
+      {/* <Loader visible={isLoading}/> */}
     </>
   );
 };
